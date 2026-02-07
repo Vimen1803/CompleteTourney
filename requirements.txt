@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+requests
+motor
+dnspython
+aiofiles
+python-dotenv
+itsdangerous
+pydantic
+discord.py
+Pillow
+aiohttp

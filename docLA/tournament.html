@@ -1,0 +1,951 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Detalle del Torneo</title>
+    <link rel="icon" href="https://cdn.discordapp.com/emojis/671348413090234393.png"/>
+    <link href="css/styles.css?v=5" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet"/>
+    <style>
+        .page-container { padding: 32px; max-width: 1200px; margin: 0 auto; color: white; }
+        .back-btn { display: inline-flex; align-items: center; gap: 8px; color: var(--text-muted); margin-bottom: 24px; cursor: pointer; transition: color 0.2s; }
+        .back-btn:hover { color: white; }
+        
+        .tab-link { color: var(--text-muted); cursor: pointer; font-weight: 500; transition: color 0.2s; padding-bottom: 2px; border-bottom: 2px solid transparent; }
+        .tab-link:hover { color: white; }
+        .tab-link.active { color: #5865f2; font-weight: bold; border-bottom-color: #5865f2;}
+        
+        .hero-section { 
+            background: var(--card-bg); 
+            border-radius: 12px;
+            margin-bottom: 24px; 
+            position: relative;
+            min-height: 400px;
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+        }
+        .hero-bg { 
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover; 
+            background-position: center; 
+            opacity: 0.3;
+        }
+        .hero-overlay {
+            position: relative;
+            z-index: 2;
+            padding: 32px;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.9) 100%);
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+        .hero-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+        .hero-title { font-size: 2.5rem; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8); color: white; line-height: 1.2; margin-bottom: 12px; }
+        .hero-description {
+            color: rgba(255,255,255,0.95); 
+            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+            white-space: normal;
+            overflow-wrap: break-word;
+            word-wrap: break-word;
+            line-height: 1.5;
+            margin-bottom: 16px;
+        }
+        .hero-status { 
+            padding: 6px 14px; 
+            border-radius: 20px; 
+            font-weight: bold; 
+            font-size: 0.9em;
+            display: inline-block;
+        }
+        .hero-footer {
+            margin-top: auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            width: 100%;
+        }
+        
+        .grid-layout { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 24px;
+            /* height: 650px; Removed to allow growth */
+        }
+        
+        .main-column, .side-column {
+            height: 100%;
+        }
+        
+        .section-card { background: var(--card-bg); border-radius: 8px; padding: 24px; margin-bottom: 24px; border: 1px solid transparent; }
+        .section-card.full-height { 
+            /* height: 55%; Removed */
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 0;
+        }
+        
+        .team-list { 
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            /* overflow-y: auto; Removed */
+            overflow-x: hidden;
+            padding-right: 8px;
+            /* flex: 1; Removed */
+            scrollbar-width: none;
+            scrollbar-color: var(--accent) var(--bg-tertiary);
+        }
+        
+        .team-list::-webkit-scrollbar { width: 8px; }
+        .team-list::-webkit-scrollbar-track { background: var(--bg-tertiary); border-radius: 5px; }
+        .team-list::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 5px; }
+        
+        .team-item { 
+            background: var(--bg-tertiary); 
+            padding: 16px; 
+            border-radius: 8px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 15px;
+            width: 95%;
+            border: 1px solid transparent;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .team-item:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+        .team-name { font-weight: bold; font-size: 1.1em; }
+        .team-captain { font-size: 0.85em; color: var(--text-muted); }
+
+        .loading-spinner { border: 4px solid rgba(255,255,255,0.1); border-left-color: var(--accent); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 50px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        /* Active Tourney Hero (Preview) */
+        .active-tourney-hero {
+            position: relative;
+            background: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            min-height: 350px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 1px solid var(--border);
+        }
+        .active-tourney-hero .hero-bg {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-size: cover;
+            background-position: center;
+            opacity: 0.4;
+            transition: opacity 0.3s;
+        }
+        .active-tourney-hero .hero-overlay {
+            position: relative;
+            z-index: 1;
+            padding: 24px;
+            background: linear-gradient(0deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.6) 50%, rgba(0,0,0,0) 100%);
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+        }
+        
+        .floating-action-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 16px 32px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(88, 101, 242, 0.4);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 2000;
+            opacity: 0;
+            transform: translateY(20px);
+            pointer-events: none;
+        }
+        .floating-action-btn.visible {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+        }
+        .floating-action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(88, 101, 242, 0.6);
+        }
+        
+        .hero-overlay h1 {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+            display: block;
+            min-width: 0;
+        }
+        .hero-overlay p {
+             white-space: pre-wrap;
+             overflow-wrap: break-word;
+             word-break: break-word;
+        }
+    </style>
+  </head>
+  <body style="overflow: auto;">
+    <!-- Navbar (Simplified) -->
+    <div style="background: var(--bg-secondary); padding: 16px 32px; border-bottom: 1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+        <a href="/" style="font-weight:bold; font-size:1.2rem; color:white; text-decoration:none; display:flex; align-items:center; gap:10px;">
+            <img src="/data/image.png" style="width: 28px; height: 28px; border-radius: 50%;" alt="Logo">Tourney Bot
+        </a>
+        <div id="user-section"></div>
+    </div>
+
+    <div id="content" class="page-container">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <!-- Edit Modal (Clone of Create) -->
+      <div id="modal-edit" class="modal-overlay">
+        <div class="modal-content" style="max-width: 1200px; width: 95%; height: 90vh; max-height: 90vh; overflow: hidden; display: flex; flex-direction: column; position: relative; padding: 0;">
+            <button class="modal-close" onclick="closeEditModal()" style="z-index: 20; top: 20px; right: 20px;">&times;</button>
+            
+            <div style="overflow-y: auto; flex: 1; padding: 32px;">
+            <div style="margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border);">
+                <h2 class="modal-title" style="margin: 0; display: flex; align-items: center; gap: 12px;">
+                    <div style="width: 32px; height: 32px; background: rgba(88, 101, 242, 0.15); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-edit" style="color: var(--accent); font-size: 14px;"></i>
+                    </div>
+                    Editar Torneo
+                </h2>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 32px; align-items: start;">
+                <!-- Left: Form -->
+                <div style="display: flex; flex-direction: column;">
+                    <form id="edit-form" onsubmit="submitEditTournament(event)" style="padding-right: 12px; flex: 1;">
+                       <input type="hidden" id="edit-t-id">
+                       
+                       <!-- Section: Basic Info -->
+                      <div style="margin-bottom: 24px;">
+                          <h3 style="font-size: 0.95rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                              <i class="fas fa-info-circle"></i> Detalles Básicos
+                          </h3>
+                          <div class="form-group">
+                            <label class="form-label">Nombre del Torneo</label>
+                            <input type="text" id="edit-t-name" class="form-input" required oninput="updatePreview('edit')"/>
+                          </div>
+                          <div class="form-group">
+                            <label class="form-label">Descripción</label>
+                            <input type="text" id="edit-t-desc" class="form-input" required oninput="updatePreview('edit')"/>
+                          </div>
+                          <div class="form-group" id="edit-t-status-group" style="display:none;">
+                            <label class="form-label">Estado del Torneo</label>
+                            <select id="edit-t-status" class="form-select" onchange="updatePreview('edit')">
+                                <option value="pending">En Espera</option>
+                                <option value="open">Abierto</option>
+                                <option value="active">En Curso</option>
+                                <option value="finished">Finalizado</option>
+                            </select>
+                          </div>
+                      </div>
+    
+                      <!-- Section: Teams -->
+                      <div style="margin-bottom: 24px;">
+                          <h3 style="font-size: 0.95rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                              <i class="fas fa-users"></i> Configuración de Equipos
+                          </h3>
+                          <div class="form-group">
+                            <label class="form-label">Máximo de Equipos</label>
+                            <select id="edit-t-teams" class="form-select" onchange="updatePreview('edit')">
+                              <option value="2">2 Equipos</option>
+                              <option value="4">4 Equipos</option>
+                              <option value="8">8 Equipos</option>
+                              <option value="16">16 Equipos</option>
+                              <option value="32">32 Equipos</option>
+                              <option value="64">64 Equipos</option>
+                            </select>
+                          </div>
+                          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px">
+                            <div class="form-group">
+                              <label class="form-label">Min. Miembros</label>
+                              <input type="number" id="edit-t-min" class="form-input" min="1" max="20" required oninput="updatePreview('edit')"/>
+                            </div>
+                            <div class="form-group">
+                              <label class="form-label">Max. Miembros</label>
+                              <input type="number" id="edit-t-max" class="form-input" min="1" max="20" required oninput="updatePreview('edit')"/>
+                            </div>
+                          </div>
+                      </div>
+                      
+                      <!-- Section: Dates -->
+                      <div style="margin-bottom: 24px;">
+                          <h3 style="font-size: 0.95rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                              <i class="fas fa-calendar-alt"></i> Horarios
+                          </h3>
+                          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px">
+                            <div class="form-group">
+                              <label class="form-label">Fecha Evento</label>
+                              <input type="date" id="edit-t-date" class="form-input" required oninput="updatePreview('edit')"/>
+                            </div>
+                            <div class="form-group">
+                              <label class="form-label">Hora Inicio</label>
+                              <input type="time" id="edit-t-start" class="form-input" required oninput="updatePreview('edit')"/>
+                            </div>
+                          </div>
+                          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px">
+                            <div class="form-group">
+                              <label class="form-label">Inicio Inscripción</label>
+                              <input type="time" id="edit-t-reg-start" class="form-input" required oninput="updatePreview('edit')"/>
+                            </div>
+                            <div class="form-group">
+                              <label class="form-label">Fin Inscripción</label>
+                              <input type="time" id="edit-t-reg-end" class="form-input" required oninput="updatePreview('edit')"/>
+                            </div>
+                          </div>
+                      </div>
+    
+                      <!-- Section: Visuals -->
+                       <div style="margin-bottom: 24px;">
+                          <h3 style="font-size: 0.95rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                              <i class="fas fa-image"></i> Visuales
+                          </h3>
+                          <div class="form-group">
+                            <label class="form-label">URL Imagen de Fondo</label>
+                            <input type="url" id="edit-t-img" class="form-input" placeholder="https://..." oninput="updatePreview('edit')"/>
+                          </div>
+                      </div>
+                    </form>
+                </div>
+                
+                <!-- Right: Preview -->
+                <div style="background: var(--bg-tertiary); padding: 37px; border-radius: 12px; position: sticky; top: 20px; align-self: start; min-width: 0;">
+                    <h3 style="margin: 0 0 20px 0; color: var(--text-header); display: flex; align-items: center; gap: 10px; font-size: 1.1rem;">
+                        <i class="fas fa-eye" style="color: var(--text-muted);"></i> Vista Previa
+                    </h3>
+                    
+                    <div class="active-tourney-hero" style="pointer-events: none; transform: scale(0.95); transform-origin: top center;">
+                        <div id="edit-preview-bg" class="hero-bg" style="background-image: linear-gradient(to right, #5865f2, #ed4245);"></div>
+                        <div class="hero-overlay">
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
+                                <div style="display:flex; gap:16px; font-size:1em; color:rgba(255,255,255,0.9); font-weight:bold; text-shadow:0 1px 2px rgba(0,0,0,0.8);">
+                                    <span id="edit-preview-status" class="badge" style="background:var(--success); font-size:0.9em;">En Curso</span>
+                                </div>
+                                <div style="font-size:0.8em; color:rgba(255,255,255,0.7);">
+                                    <div style="text-align:left; display:flex; flex-direction:column; gap:6px;">
+                                        <div><i class="fas fa-calendar" style="width:20px; text-align:center;"></i> <span id="edit-preview-date">YYYY-MM-DD</span></div>
+                                        <div style="font-size:0.9em; opacity:0.8"><i class="fas fa-clock" style="width:20px; text-align:center;"></i> Insc: <span id="edit-preview-reg">00:00 - 00:00</span></div>
+                                        <div style="font-size:0.9em; opacity:0.8"><i class="fas fa-flag" style="width:20px; text-align:center;"></i> Inicio: <span id="edit-preview-start">00:00</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <h1 id="edit-preview-name" style="font-size:2.5rem; margin-bottom:12px; font-weight:800; text-shadow:0 2px 10px rgba(0,0,0,0.5); line-height:1.1; word-break: break-word;">Nombre del Torneo</h1>
+                            <p id="edit-preview-desc" style="color:rgba(255,255,255,0.9); font-size:0.95em; max-width:100%; margin-bottom:16px; line-height:1.5; white-space:normal; overflow-wrap:break-word;">
+                                Descripción...
+                            </p>
+                            <div class="hero-footer">
+                                <div style="display:flex; gap:16px; font-size:1em; color:rgba(255,255,255,0.9); font-weight:bold; text-shadow:0 1px 2px rgba(0,0,0,0.8);">
+                                    <span id="edit-preview-teams"><i class="fas fa-users"></i> 16 Equipos</span>
+                                    <span id="edit-preview-members"><i class="fas fa-user-friends"></i> 1 vs 1</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Pro Tip & Info -->
+                    <div style="margin-top: 24px; padding: 16px; background: rgba(0,0,0,0.2); border-radius: 8px; color: var(--text-muted); font-size: 0.9em; line-height: 1.5;">
+                        <p style="margin: 0 0 10px 0;"><strong><i class="fas fa-lightbulb" style="color: #faa61a;"></i> Pro Tip:</strong></p>
+                        Usa una imagen de alta resolución (1920x1080) para obtener mejores resultados. Si no proporcionas una imagen, se usará el icono del servidor por defecto.
+                    </div>
+                    <div style="margin-top: 12px; padding: 16px; background: rgba(0,0,0,0.2); border-radius: 8px; color: var(--text-muted); font-size: 0.9em; line-height: 1.5;">
+                        <p style="margin: 0 0 5px 0;"><strong><i class="fas fa-info-circle" style="color: #5865f2;"></i> Info:</strong></p>
+                        Las horas y fechas son solo informativas, las inscripciones e inicio serán gestionadas por un administrador.
+                    </div>
+                </div>
+            </div>
+    </div>
+      <button id="edit-floating-btn" class="floating-action-btn" onclick="document.getElementById('edit-form').requestSubmit()" style="position: absolute; bottom: 30px; right: 30px;">
+          <i class="fas fa-save"></i> Guardar Cambios
+      </button>
+      </div>
+      </div>
+
+    <script>
+        let tourneyData = null;
+        let guildDataGlobal = null;
+        let activeTab = 'general';
+        let lastDataHash = '';
+
+        // Tab Switching Logic
+        window.switchTournamentTab = function(tabName) {
+            activeTab = tabName;
+            const generalTab = document.getElementById('tab-general');
+            const matchupsTab = document.getElementById('tab-matchups');
+            const btnGeneral = document.getElementById('btn-general');
+            const btnMatchups = document.getElementById('btn-matchups');
+            
+            if (tabName === 'general') {
+                if(generalTab) generalTab.style.display = 'block';
+                if(matchupsTab) matchupsTab.style.display = 'none';
+                
+                if(btnGeneral) btnGeneral.classList.add('active');
+                if(btnMatchups) btnMatchups.classList.remove('active');
+            } else {
+                if(generalTab) generalTab.style.display = 'none';
+                if(matchupsTab) matchupsTab.style.display = 'flex'; // Flex for centering
+                
+                if(btnGeneral) btnGeneral.classList.remove('active');
+                if(btnMatchups) btnMatchups.classList.add('active');
+            }
+        };
+
+        // Delete Team Function (Available globally)
+        window.deleteTeam = async function(guildId, teamId) {
+            if(!confirm("¿Estás seguro de que quieres eliminar este equipo?")) return;
+            try {
+                const res = await fetch(`/api/guild/${guildId}/team/${teamId}/delete`, { method: 'POST' });
+                if(res.ok) {
+                    loadTournament(true); // Force Reload
+                } else {
+                    alert("Error al eliminar equipo. Verifica permisos.");
+                }
+            } catch(e) {
+                 alert("Error de conexión");
+            }
+        }
+
+        async function loadTournament(force = false) {
+            const params = new URLSearchParams(window.location.search);
+            const guildId = params.get('guild');
+            const tourneyId = params.get('tourney');
+            
+            if(!guildId || !tourneyId) {
+                document.getElementById('content').innerHTML = "<h1>Error: Falta ID de torneo o servidor</h1>";
+                return;
+            }
+
+            // Check if user is logged in
+            try {
+                const userRes = await fetch('/api/user');
+                const userSection = document.getElementById('user-section');
+                if (userRes.ok) {
+                    const currentUser = await userRes.json();
+                     userSection.innerHTML = `
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="color: white;">${currentUser.username}</span>
+                            <img src="${currentUser.avatar ? `https://cdn.discordapp.com/avatars/${currentUser.id}/${currentUser.avatar}.png` : 'https://cdn.discordapp.com/embed/avatars/0.png'}" 
+                                 style="width: 32px; height: 32px; border-radius: 50%;">
+                            <a href="/logout" style="color: #ed4245; padding: 6px 12px; background: transparent; border: none; cursor: pointer; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'"><i class="fas fa-sign-out-alt"></i></a>
+                        </div>
+                    `;
+                }
+            } catch(e) { }
+
+            try {
+                const res = await fetch(`/api/guild/${guildId}/tournament/${tourneyId}`);
+                if(!res.ok) throw new Error("Not Found");
+                const data = await res.json();
+                
+                // Fetch guild info for icon fallback and store globally
+                const guildRes = await fetch(`/api/guild/${guildId}/public`);
+                const guildData = guildRes.ok ? await guildRes.json() : null;
+                guildDataGlobal = guildData; // Store for preview
+
+                // Simple Change Detection
+                const currentHash = JSON.stringify({
+                    t: data.tournament,
+                    teams: data.teams,
+                    can: data.can_manage
+                });
+                
+                if (!force && currentHash === lastDataHash) {
+                    return; // No changes
+                }
+                lastDataHash = currentHash;
+
+                const t = data.tournament;
+                tourneyData = t; // Store global for Edit
+
+                const teams = data.teams;
+                
+                const canManage = data.can_manage;
+                const isLoggedIn = data.is_logged_in;
+                
+                // Login Banner for guests
+                let loginBannerHtml = '';
+                if (!isLoggedIn) {
+                    loginBannerHtml = `
+                        <div style="background: linear-gradient(135deg, #5865f2 0%, #7289da 100%); padding: 20px; border-radius: 8px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
+                            <p style="color: white; margin: 0; font-weight: 500;"><i class="fas fa-info-circle"></i> Inicia sesión con Discord para gestionar el torneo y participar</p>
+                            <a href="/login?redirect=/tournament?guild=${guildId}%26tourney=${tourneyId}" style="background: white; color: #5865f2; padding: 10px 20px; border-radius: 6px; font-weight: bold; display: flex; align-items: center; gap: 8px; text-decoration: none;">
+                                <i class="fab fa-discord"></i> Iniciar Sesión
+                            </a>
+                        </div>
+                    `;
+                }
+                
+                // Banner Logic
+                let bannerStyle = `background-image: linear-gradient(to right, #5865f2, #ed4245);`;
+                if(t.image_url && t.image_url.trim() !== "" && t.image_url !== "None") {
+                    bannerStyle = `background-image: url('${t.image_url}');`;
+                } else if (guildData && guildData.guild && guildData.guild.icon) {
+                    bannerStyle = `background-image: url('https://cdn.discordapp.com/icons/${guildId}/${guildData.guild.icon}.png?size=1024');`;
+                }
+                
+                const statusMap = { 'open': 'Abierto', 'active': 'En Curso', 'finished': 'Finalizado', 'pending': 'En Espera' };
+                const st = statusMap[t.status] || t.status;
+                
+                // Status color logic
+                let statusColor = '#6b7280'; // Default Pending/Gray
+                if(t.status === 'open' || t.status === 'active') statusColor = '#3ba55c'; // Green
+                else if(t.status === 'finished') statusColor = '#ed4245'; // Red
+                
+                const bracketStyle = t.last_bracket_url 
+                    ? `background-image: url('${t.last_bracket_url}'); background-repeat: no-repeat; background-position: center; background-size: contain;` 
+                    : `background-image: url('https://tourneydoc.victormenjon.es/data/image.png'); background-repeat: repeat; background-position: center; background-size: 100px;`;
+
+                const winnerHtml = t.winner_name ? 
+                    `<div style="padding: 4px 10px; border-radius: 4px; font-size: 0.8em; font-weight: bold; text-transform: uppercase; background:#ffd700; color:black; display:flex; align-items:center; gap:6px; box-shadow:0 2px 4px rgba(0,0,0,0.5);">
+                        <i class="fas fa-crown"></i> ${t.winner_name}
+                     </div>` : '';
+
+                // Determine Tab Visibility
+                const generalDisplay = activeTab === 'general' ? 'block' : 'none';
+                const matchupsDisplay = activeTab === 'matchups' ? 'flex' : 'none';
+                const generalClass = activeTab === 'general' ? 'tab-link active' : 'tab-link';
+                const matchupsClass = activeTab === 'matchups' ? 'tab-link active' : 'tab-link';
+
+                document.getElementById('content').innerHTML = `
+                    ${loginBannerHtml}
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <a href="/server?id=${guildId}" class="back-btn" style="text-decoration: none; margin-bottom: 0;"><i class="fas fa-arrow-left"></i> Volver a Servidor</a>
+                        
+                        <div style="display: flex; gap: 20px;">
+                            <span onclick="switchTournamentTab('general')" id="btn-general" class="${generalClass}">General</span>
+                            <span onclick="switchTournamentTab('matchups')" id="btn-matchups" class="${matchupsClass}">Enfrentamientos</span>
+                        </div>
+                    </div>
+
+                    <div id="tab-general" style="display: ${generalDisplay};">
+                        <div class="hero-section">
+                            <div class="hero-bg" style="${bannerStyle}"></div>
+                            <div class="hero-overlay">
+                                <div class="hero-header">
+                                    <div style="display:flex; gap:16px; font-size:1em; color:rgba(255,255,255,0.9); font-weight:bold; text-shadow:0 1px 2px rgba(0,0,0,0.8);">
+                                        <span class="hero-status" style="background: ${statusColor}; color: white;">${st}</span>
+                                        ${winnerHtml}
+                                    </div>
+                                    <div style="font-size:0.8em; color:rgba(255,255,255,0.7);">
+                                       ${t.date ? 
+                                           `<div style="text-align:left; display:flex; flex-direction:column; gap:6px;">
+                                                <div><i class="fas fa-calendar" style="width:20px; text-align:center;"></i> ${t.date}</div>
+                                                <div style="font-size:0.9em; opacity:0.8"><i class="fas fa-clock" style="width:20px; text-align:center;"></i> Insc: ${t.registration_start_time} - ${t.registration_end_time}</div>
+                                                <div style="font-size:0.9em; opacity:0.8"><i class="fas fa-flag" style="width:20px; text-align:center;"></i> Inicio: ${t.start_time}</div>
+                                            </div>` 
+                                         : `<i class="fas fa-calendar"></i> ${t.start_date || 'N/A'}`}
+                                    </div>
+                                </div>
+
+                                <div class="hero-title">${t.name}</div>
+                                <div class="hero-description">${t.description || 'Sin descripción'}</div>
+
+                                <div class="hero-footer">
+                                    <div style="display:flex; gap:20px; color:rgba(255,255,255,0.8); font-weight:500;">
+                                        <span><i class="fas fa-users"></i> ${t.max_teams} Equipos</span>
+                                        <span><i class="fas fa-user-friends"></i> ${t.min_members}-${t.max_members} Miembros/Equipo</span>
+                                    </div>
+                                    <div style="display:flex; gap:8px;">
+                                        ${data.can_manage ? `
+                                            <button onclick="editTournament()" style="background:rgba(255,255,255,0.1); border:none; color:white; padding:8px 12px; border-radius:50%; cursor:pointer;"><i class="fas fa-edit"></i></button>
+                                            <button onclick="deleteTournament()" style="background:rgba(240,71,71,0.2); border:none; color:#f04747; padding:8px 12px; border-radius:50%; cursor:pointer;"><i class="fas fa-trash"></i></button>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="grid-layout">
+                            <div class="main-column">
+                                <div class="section-card" style="height: auto; min-width:205%;">
+                                    <h2><i class="fas fa-users"></i> Equipos Registrados (${teams.length}/${t.max_teams})</h2>
+                                    <div class="team-list" style="margin-top:16px; overflow-y: visible; max-height: none;">
+                                        ${teams.map(tm => {
+                                            const membersHtml = (tm.resolved_members || []).map(m => `
+                                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                                                    ${m.is_leader ? '<i class="fas fa-crown" style="color:#ffd700; font-size:0.8em;"></i>' : '<div style="width:14px;"></div>'} 
+                                                    <img src="${m.avatar}" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover; background:var(--bg-tertiary);" alt="Avatar">
+                                                    <span style="font-size: 0.9em; ${m.is_leader ? 'font-weight:bold; color:white;' : 'color:var(--text-normal);'}">${m.name}</span>
+                                                </div>
+                                            `).join('');
+
+                                            // Delete Button
+                                            const canDelete = canManage && (t.status === 'open' || t.status === 'pending');
+                                            const deleteBtn = canDelete ? `
+                                                <div onclick="deleteTeam('${guildId}', '${tm.id}')" style="position: absolute; bottom: 10px; right: 10px; cursor: pointer; color: #ed4245; opacity: 0.7; transition: opacity 0.2s;" title="Eliminar Equipo">
+                                                    <i class="fas fa-trash"></i>
+                                                </div>
+                                            ` : '';
+                                            
+                                            // Dynamic height + relative positioning for delete button
+                                            return `
+                                            <div class="team-item" style="height: calc(30 + ${t.max_members * 50}px); position: relative;">
+                                                <div class="team-name" style="padding-bottom:5px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+                                                    <span>${tm.name}</span>
+                                                    <span style="font-size:0.75em; background:var(--bg-secondary); padding:2px 8px; border-radius:12px;">${tm.resolved_members.length}</span>
+                                                </div>
+                                                <div style="display:flex; flex-direction:column; gap:10px;">
+                                                    ${membersHtml}
+                                                </div>
+                                                ${deleteBtn}
+                                            </div>
+                                        `}).join('')}
+                                        ${teams.length === 0 ? '<p style="color:var(--text-muted)">Aún no hay equipos registrados.</p>' : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="tab-matchups" style="display: ${matchupsDisplay}; min-height: calc(100vh - 100px); align-items: center; justify-content: center; border-radius: 12px;width:112%; margin-left: -70px; ${bracketStyle}"></div>
+                `;
+            } catch(e) {
+                console.error(e);
+                if (!tourneyData) {
+                    document.getElementById('content').innerHTML = "<h1>Error cargando torneo</h1><p>Es posible que no exista o no tengas permisos.</p>";
+                }
+            }
+        }
+        
+        loadTournament();
+        setInterval(() => loadTournament(), 5000); // Auto-Refresh
+
+        // --- Edit/Delete Logic (Global) ---
+        function closeEditModal() {
+             document.getElementById('modal-edit').classList.remove('active');
+        }
+        
+        async function processImageFile(fileInput) {
+            return null; // No file input anymore
+        }
+
+        let initialEditState = null;
+
+        function checkFloatingButton(prefix) {
+            const btn = document.getElementById(prefix + '-floating-btn');
+            if(!btn) return;
+
+            const requiredIds = ['name', 'desc', 'date', 'start', 'reg-start', 'reg-end'];
+            let allFilled = true;
+            for(const id of requiredIds) {
+                const el = document.getElementById(prefix + '-t-' + id);
+                if(!el || !el.value.trim()) {
+                    allFilled = false;
+                    break;
+                }
+            }
+            
+            let show = false;
+            // Only 'edit' supported effectively here as create is not in this file
+            if (prefix === 'edit') {
+                if (allFilled && initialEditState) {
+                   const currentName = document.getElementById('edit-t-name').value;
+                   const currentDesc = document.getElementById('edit-t-desc').value;
+                   const currentTeams = document.getElementById('edit-t-teams').value;
+                   const currentMin = document.getElementById('edit-t-min').value;
+                   const currentMax = document.getElementById('edit-t-max').value;
+                   const currentDate = document.getElementById('edit-t-date').value;
+                   const currentStart = document.getElementById('edit-t-start').value;
+                   const currentRegStart = document.getElementById('edit-t-reg-start').value;
+                   const currentRegEnd = document.getElementById('edit-t-reg-end').value;
+                   const currentImg = document.getElementById('edit-t-img').value;
+                   const currentStatus = document.getElementById('edit-t-status').value;
+                   
+                   if (currentName !== initialEditState.name ||
+                       currentDesc !== initialEditState.desc ||
+                       currentTeams !== initialEditState.teams ||
+                       currentMin !== initialEditState.min ||
+                       currentMax !== initialEditState.max ||
+                       currentDate !== initialEditState.date ||
+                       currentStart !== initialEditState.start ||
+                       currentRegStart !== initialEditState.regStart ||
+                       currentRegEnd !== initialEditState.regEnd ||
+                       currentImg !== initialEditState.img ||
+                       currentStatus !== initialEditState.status) {
+                       show = true;
+                   }
+                }
+            }
+            
+            if(show) btn.classList.add('visible');
+            else btn.classList.remove('visible');
+        }
+
+        function updatePreview(prefix) {
+            const nameInput = document.getElementById(prefix + '-t-name');
+            const descInput = document.getElementById(prefix + '-t-desc');
+            const teamsInput = document.getElementById(prefix + '-t-teams');
+            const minInput = document.getElementById(prefix + '-t-min');
+            const maxInput = document.getElementById(prefix + '-t-max');
+            const dateInput = document.getElementById(prefix + '-t-date');
+            const startInput = document.getElementById(prefix + '-t-start');
+            const regStartInput = document.getElementById(prefix + '-t-reg-start');
+            const regEndInput = document.getElementById(prefix + '-t-reg-end');
+            const imgInput = document.getElementById(prefix + '-t-img');
+
+            const name = nameInput ? nameInput.value : 'Nombre del Torneo';
+            const desc = descInput ? descInput.value : 'Descripción del torneo...';
+            const teams = teamsInput ? teamsInput.value : '16';
+            const maxM = maxInput ? maxInput.value : '1';
+            const date = dateInput ? dateInput.value : 'YYYY-MM-DD';
+            const start = startInput ? startInput.value : '00:00';
+            const regStart = regStartInput ? regStartInput.value : '00:00';
+            const regEnd = regEndInput ? regEndInput.value : '00:00';
+            const imgUrl = imgInput ? imgInput.value : '';
+    
+            // Fallbacks for display
+            const nameText = name ? name : 'Nombre del Torneo';
+            const descText = desc ? desc : 'Descripción del torneo...';
+
+            const nameEl = document.getElementById(prefix + '-preview-name');
+            if(nameEl) nameEl.textContent = nameText;
+            
+            const descEl = document.getElementById(prefix + '-preview-desc');
+            if(descEl) descEl.textContent = descText;
+    
+            const teamsEl = document.getElementById(prefix + '-preview-teams');
+            if(teamsEl) teamsEl.innerHTML = `<i class="fas fa-users"></i> ${teams} Equipos`;
+    
+            const membersEl = document.getElementById(prefix + '-preview-members');
+            if(membersEl) membersEl.innerHTML = `<i class="fas fa-user-friends"></i> ${maxM} vs ${maxM}`;
+    
+            const dateEl = document.getElementById(prefix + '-preview-date');
+            if(dateEl) dateEl.textContent = date;
+    
+            const startEl = document.getElementById(prefix + '-preview-start');
+            if(startEl) startEl.textContent = start;
+    
+            const regEl = document.getElementById(prefix + '-preview-reg');
+            if(regEl) regEl.textContent = `${regStart} - ${regEnd}`;
+            
+            // Status update
+            let statusText = 'Abierto';
+            let statusColor = '#3ba55c';
+            
+            // Use Editing Status if visible
+            const statusGroup = document.getElementById('edit-t-status-group');
+            const statusSelect = document.getElementById('edit-t-status');
+             
+            if (prefix === 'edit' && statusGroup && statusGroup.style.display !== 'none' && statusSelect) {
+                 const val = statusSelect.value;
+                 const map = { 'open': 'Abierto', 'pending': 'En Espera', 'active': 'En Curso', 'finished': 'Finalizado' };
+                 statusText = map[val] || val;
+                 if(val === 'open' || val === 'active') statusColor = '#3ba55c';
+                 else if(val === 'finished') statusColor = '#ed4245';
+                 else statusColor = '#6b7280';
+            } else if (tourneyData) {
+                 const map = { 'open': 'Abierto', 'pending': 'En Espera', 'active': 'En Curso', 'finished': 'Finalizado' };
+                 statusText = map[tourneyData.status] || tourneyData.status;
+                 if(tourneyData.status === 'finished') statusColor = '#ed4245';
+                 else if(tourneyData.status === 'pending') statusColor = '#6b7280';
+                 else if(tourneyData.status === 'open' || tourneyData.status === 'active') statusColor = '#3ba55c'; // green
+            }
+
+            const previewContainer = document.getElementById(prefix + '-preview-bg').parentElement;
+            const badge = previewContainer.querySelector('.badge');
+            if(badge) {
+                badge.textContent = statusText;
+                badge.style.background = statusColor;
+            }
+
+            const bgDiv = document.getElementById(prefix + '-preview-bg');
+            if (bgDiv) {
+                 const setFallback = () => {
+                      if (guildDataGlobal && guildDataGlobal.guild && guildDataGlobal.guild.icon) {
+                           // guild.icon is already a full URL from backend
+                           bgDiv.style.backgroundImage = `url('${guildDataGlobal.guild.icon}')`;
+                      } else {
+                           bgDiv.style.backgroundImage = 'linear-gradient(to right, #5865f2, #ed4245)';
+                      }
+                 };
+
+                if (imgUrl && imgUrl.trim() && imgUrl !== "null" && imgUrl !== "None" && imgUrl !== "undefined") {
+                    const img = new Image();
+                    img.onload = () => { bgDiv.style.backgroundImage = `url('${imgUrl}')`; };
+                    img.onerror = setFallback;
+                    img.src = imgUrl;
+                } else {
+                    setFallback();
+                }
+            }
+            
+            checkFloatingButton(prefix);
+          }
+
+        window.editTournament = function() {
+             const t = tourneyData; // Global
+             if(!t) return;
+             
+            document.getElementById('edit-t-id').value = t.id;
+            document.getElementById('edit-t-name').value = t.name;
+            document.getElementById('edit-t-desc').value = t.description || "";
+            document.getElementById('edit-t-teams').value = t.max_teams;
+            document.getElementById('edit-t-min').value = t.min_members || 1;
+            document.getElementById('edit-t-max').value = t.max_members || 1;
+            
+            document.getElementById('edit-t-date').value = t.date || "";
+            document.getElementById('edit-t-reg-start').value = t.registration_start_time || "";
+            document.getElementById('edit-t-reg-end').value = t.registration_end_time || "";
+            document.getElementById('edit-t-start').value = t.start_time || "";
+            
+            document.getElementById('edit-t-img').value = t.image_url || "";
+            
+            // Status Logic
+            const statusGroup = document.getElementById('edit-t-status-group');
+            const statusSelect = document.getElementById('edit-t-status');
+            
+            // Always show status group in Edit Mode for flexibility, or keep dependent logic?
+            // User requested adding label/dropdown. In server.html I made it always visible if logic allows.
+            // Here currently existing logic was: if open/pending show it.
+            // I'll update it to always show unless maybe finished?
+            // "en el form de editar tienes que añadir un label para el estado".
+            // I'll make it visible regardless of current status so user can change it (e.g. from Open to Active).
+            if(statusGroup) {
+                statusGroup.style.display = 'block';
+                if(statusSelect) statusSelect.value = t.status;
+            }
+            
+            // Store Initial State
+            initialEditState = {
+                name: t.name,
+                desc: t.description || "",
+                teams: String(t.max_teams),
+                min: String(t.min_members || 1),
+                max: String(t.max_members || 1),
+                date: t.date || "",
+                start: t.start_time || "",
+                regStart: t.registration_start_time || "",
+                regEnd: t.registration_end_time || "",
+                img: t.image_url || "",
+                status: t.status
+            };
+            
+            document.getElementById('modal-edit').classList.add('active');
+            updatePreview('edit');
+            checkFloatingButton('edit');
+        }
+        
+        window.submitEditTournament = async function(e) {
+            e.preventDefault();
+            const id = document.getElementById('edit-t-id').value;
+            const name = document.getElementById('edit-t-name').value;
+            const desc = document.getElementById('edit-t-desc').value;
+            const teams = document.getElementById('edit-t-teams').value;
+            const minM = document.getElementById('edit-t-min').value;
+            const maxM = document.getElementById('edit-t-max').value;
+            
+            const date = document.getElementById('edit-t-date').value;
+            const regStart = document.getElementById('edit-t-reg-start').value;
+            const regEnd = document.getElementById('edit-t-reg-end').value;
+            const startTime = document.getElementById('edit-t-start').value;
+            
+            let img = document.getElementById('edit-t-img').value; 
+            // const fileInput = document.getElementById('edit-t-img-file');
+
+            /*
+            try {
+                const fileImg = await processImageFile(fileInput);
+                if(fileImg) img = fileImg;
+            } catch(err) { return alert(err.message); }
+            */
+
+            // If no image provided, use server icon as fallback
+            if (!img || !img.trim() || img === "null" || img === "None" || img === "undefined") {
+              if (guildDataGlobal && guildDataGlobal.guild && guildDataGlobal.guild.icon) {
+                img = guildDataGlobal.guild.icon;
+              }
+            }
+            
+             try {
+                const params = new URLSearchParams(window.location.search);
+                const guildId = params.get('guild');
+
+                // Read Status if visible
+                let statusVal = null;
+                const statusGroup = document.getElementById('edit-t-status-group');
+                if (statusGroup.style.display !== 'none') {
+                    statusVal = document.getElementById('edit-t-status').value;
+                }
+
+                const payload = { 
+                    name: name, description: desc, max_teams: teams, 
+                    min_members: minM, max_members: maxM,
+                    date: date, reg_start: regStart, reg_end: regEnd, start_time: startTime,
+                    image_url: img
+                };
+                if(statusVal) payload.status = statusVal;
+
+                const res = await fetch(`/api/guild/${guildId}/tournament/${id}/update`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+                
+                if(res.ok) {
+                    alert("Torneo actualizado!");
+                    loadTournament(true);
+                    closeEditModal();
+                } else {
+                    const d = await res.json();
+                    alert("Error: " + d.error);
+                }
+            } catch(e) { alert("Error de conexión"); }
+        }
+        
+        window.deleteTournament = async function() {
+             if(!confirm("¿Eliminar torneo irreversiblemente?")) return;
+             try {
+                 const params = new URLSearchParams(window.location.search);
+                 const guildId = params.get('guild');
+                 const tourneyId = params.get('tourney');
+                 
+                 const res = await fetch(`/api/guild/${guildId}/tournament/${tourneyId}/delete`, { method: 'POST' });
+                 if(res.ok) {
+                     window.location.href = `/server?id=${guildId}`;
+                 } else {
+                     alert("Error al eliminar");
+                 }
+             } catch(e) { alert("Error de conexión"); }
+        }
+    </script>
+  </body>
+</html>

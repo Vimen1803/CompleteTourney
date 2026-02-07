@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tourney Bot Doc</title>
+    <link rel="icon" href="https://cdn.discordapp.com/emojis/671348413090234393.png"/>
+    <link rel="stylesheet" href="css/styles.css?v=5" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="app-container">
+      <!-- Sidebar -->
+      <aside class="sidebar" id="sidebar">
+        <div class="brand" style="cursor: pointer;">
+          <a href="/" style="display: flex;align-items: center;justify-content: center;flex-direction: row; text-decoration: none;">
+            <div class="logo-placeholder">
+              <!-- Replace with your bot icon URL -->
+              <img src="data/image.png" alt="Bot Logo">
+            </div>
+            <h1 style="margin-left: 10px;">Tourney Bot Docs</h1>
+          </a>
+        </div>
+        <div class="nav-header">Categorías</div>
+        <ul class="nav-links" id="category-list">
+          <!-- Categories injected here -->
+        </ul>
+        
+        <!-- Mobile Only Actions (Hidden on Desktop) -->
+        <div class="mobile-actions" style="display: none;">
+             <div id="bot-status-mobile" class="status-badge" style="display: flex; align-items: center; gap: 8px; font-size: 0.85em; background: rgba(255,255,255,0.05); padding: 6px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1);">
+                 <span class="status-dot" style="width: 8px; height: 8px; border-radius: 50%; background-color: #ef4444; transition: all 0.3s ease;"></span>
+                 <span class="status-text" style="color: var(--text-muted);">Comprobando...</span>
+             </div>
+             <a href="/dashboard" class="action-btn primary" style="margin-bottom: 8px;"><i class="fas fa-rocket"></i> Get Started</a>
+             <a href="https://discord.com/oauth2/authorize?client_id=1448450835213189191" class="action-btn secondary" target="_blank"><i class="fab fa-plus"></i> Añadir Bot</a>
+        </div>
+
+        <div class="sidebar-footer">
+          <div class="sidebar-actions" style="margin-bottom: 12px;">
+             <a href="/status" class="action-btn secondary" style="width: 100%; justify-content: center; margin-bottom: 8px;"><i class="fas fa-heartbeat"></i> Estado del Bot</a>
+             <a href="https://github.com/Vimen1803/TournamentDiscordBot" class="action-btn primary" style="width: 100%; justify-content: center;" target="_blank"><i class="fab fa-github"></i> GitHub</a>
+          </div>
+          <p>© 2026 Desarrollado por <a href="https://victormenjon.es" target="_blank">Vimen</a></p>
+        </div>
+      </aside>
+      <!-- Main Content -->
+      <main class="main-content">
+        <header class="top-bar">
+          <button id="menu-toggle" class="menu-toggle">
+            <i class="fas fa-bars"></i>
+          </button>
+          <div class="search-container">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" id="search-input" placeholder="Buscar comandos (ej. help, create)..."/>
+          </div>
+          <div style="flex:1"></div>
+          <div class="header-actions">
+            <a href="/dashboard" class="action-btn primary"><i class="fas fa-rocket"></i> Get Started</a>
+            <a href="https://discord.com/oauth2/authorize?client_id=1448450835213189191" class="action-btn secondary" target="_blank"><i class="fab fa-plus"></i> Añadir Bot</a>
+          </div>
+        </header>
+        <div class="content-wrapper">
+          <div id="welcome-message" class="welcome-banner">
+            <h2>Documentación de Tourney Bot</h2>
+            <p>
+              Explora todos los comandos disponibles seleccionando una categoría
+              o usando la barra de búsqueda.
+            </p>
+          </div>
+          <div id="commands-container" class="commands-grid">
+            <!-- Cards injected by JS -->
+          </div>
+
+          <footer class="app-footer">
+            <!-- Modal for Command Details -->
+    <div id="command-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close" id="modal-close">&times;</button>
+            <div id="modal-body">
+                <!-- Content injected via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Loading to avoid CORS issues locally -->
+    <!-- Bot Status -->
+    <script src="js/status.js?v=3"></script>
+    <script src="js/script.js?v=3"></script>
+  </body>
+</html>

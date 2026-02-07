@@ -1,0 +1,225 @@
+{
+  "Miembros": [
+    {
+      "name": "tourney help",
+      "desc": "Muestra la ayuda de comandos paginada.",
+      "usage": ",tourney help"
+    },
+    {
+      "name": "tourney register",
+      "desc": "Registra un equipo en el torneo activo.",
+      "usage": ",tourney register <nombre_equipo> <@miembros...(lider no)>"
+    },
+    {
+      "name": "tourney invite",
+      "desc": "Invita a un usuario a tu equipo (solo líder).",
+      "usage": ",tourney invite <@usuario>"
+    },
+    {
+      "name": "tourney leave",
+      "desc": "Abandona tu equipo actual. Si eres el último, se borra. Si eres líder, se pasa el liderazgo.",
+      "usage": ",tourney leave"
+    },
+    {
+      "name": "tourney info",
+      "desc": "Muestra información del torneo activo o de uno específico.",
+      "usage": ",tourney info [id_torneo]",
+      "subcommands": [
+        {
+          "name": "",
+          "desc": "Muestra información del torneo activo.",
+          "usage": ",tourney info"
+        },
+        {
+          "name": "[id_torneo]",
+          "desc": "Muestra información del torneo específico.",
+          "usage": ",tourney info [id_torneo]"
+        }
+      ]
+    },
+    {
+      "name": "tourney teams",
+      "desc": "Lista los equipos registrados en un torneo.",
+      "usage": ",tourney teams [id_torneo]",
+      "subcommands": [
+        {
+          "name": "",
+          "desc": "Lista los equipos registrados en el torneo activo.",
+          "usage": ",tourney teams"
+        },
+        {
+          "name": "[id_torneo]",
+          "desc": "Lista los equipos registrados en el torneo específico.",
+          "usage": ",tourney teams [id_torneo]"
+        }
+      ]
+    },
+    {
+      "name": "tourney team",
+      "desc": "Muestra información detallada de un equipo.",
+      "usage": ",tourney team [@miembro / id_equipo]",
+      "subcommands": [
+        {
+          "name": "[@miembro / id_equipo]",
+          "desc": "Muestra información detallada del equipo específico.",
+          "usage": ",tourney team [@miembro / id_equipo]"
+        }
+      ]
+    },
+    {
+      "name": "tourney historial",
+      "desc": "Muestra torneos pasados.",
+      "usage": ",tourney historial"
+    },
+    {
+      "name": "tourney link",
+      "desc": "Muestra el enlace de invitación del bot.",
+      "usage": ",tourney link"
+    },
+    {
+      "name": "tourney doc",
+      "desc": "Muestra el enlace de documentación del bot.",
+      "usage": ",tourney doc"
+    },
+    {
+      "name": "tourney bug",
+      "desc": "Reporta un bug a los desarrolladores.",
+      "usage": ",tourney bug [descripción]"
+    },
+    {
+      "name": "tourney suggest",
+      "desc": "Envía una sugerencia a los desarrolladores.",
+      "usage": ",tourney suggest [sugerencia]"
+    },
+    {
+      "name": "tourney ping",
+      "desc": "Muestra la salud del bot.",
+      "usage": ",tourney ping"
+    }
+  ],
+  "Encargados": [
+    {
+      "name": "tourney create",
+      "desc": "Crea un nuevo torneo. Permite adjuntar una imagen.",
+      "usage": ",tourney create Nombre | Desc | Fecha | IniInsc | FinInsc | IniTorneo | MaxTeams | MinMiem | MaxMiem"
+    },
+    {
+      "name": "tourney close",
+      "desc": "Cierra las inscripciones del torneo activo (Open -> Pending).",
+      "usage": ",tourney close"
+    },
+    {
+      "name": "tourney open",
+      "desc": "Abre las inscripciones del torneo activo (Pending -> Open).",
+      "usage": ",tourney open"
+    },
+    {
+      "name": "tourney start",
+      "desc": "Inicia el torneo y genera brackets.",
+      "usage": ",tourney start"
+    },
+    {
+      "name": "tourney delete",
+      "desc": "Elimina un torneo permanentemente.",
+      "usage": ",tourney delete [id_torneo]"
+    },
+    {
+      "name": "tourney kick",
+      "desc": "Expulsa un equipo del torneo activo.",
+      "usage": ",tourney kick [id_equipo / @miembro]"
+    },
+    {
+      "name": "tourney set winner",
+      "desc": "Define el ganador de una partida manualmente.",
+      "usage": ",tourney set winner [@miembro]"
+    }
+  ],
+  "Admin": [
+    {
+      "name": "tourney settings",
+      "desc": "Muestra la configuración actual del servidor.",
+      "usage": ",tourney settings"
+    },
+    {
+      "name": "tourney set category",
+      "desc": "Configura la categoría para canales de torneo.",
+      "usage": ",tourney set category [id_categoría]"
+    },
+    {
+      "name": "tourney set bracket",
+      "desc": "Configura el canal de brackets.",
+      "usage": ",tourney set bracket [id_canal]"
+    },
+    {
+      "name": "tourney set lobby",
+      "desc": "Configura el canal de lobby.",
+      "usage": ",tourney set lobby [id_canal]"
+    },
+    {
+      "name": "tourney set bot_admin",
+      "desc": "Configura el canal de admin del bot.",
+      "usage": ",tourney set bot_admin [id_canal]"
+    },
+    {
+      "name": "tourney set prefix",
+      "desc": "Configura el prefijo del bot para el servidor.",
+      "usage": ",tourney set prefix [nuevo_prefijo]"
+    },
+    {
+      "name": "tourney set logs",
+      "desc": "Configura o alterna el canal de logs.",
+      "usage": ",tourney set logs [id_canal]",
+      "subcommands": [
+        {
+          "name": "",
+          "desc": "Habilita y deshabilita los logs.",
+          "usage": ",tourney set logs"
+        },
+        {
+          "name": "[id_canal]",
+          "desc": " Configura el canal de logs.",
+          "usage": ",tourney set logs [id_canal]"
+        }
+      ]
+    },
+    {
+      "name": "tourney roles",
+      "desc": "Gestiona roles permitidos para ser Encargado.",
+      "usage": ",tourney roles [add/remove] <@rol>",
+      "subcommands": [
+        {
+          "name": "add",
+          "desc": "Añade un rol permitido.",
+          "usage": ",tourney roles add <@rol>"
+        },
+        {
+          "name": "remove",
+          "desc": "Elimina un rol permitido.",
+          "usage": ",tourney roles remove <@rol>"
+        },
+        {
+          "name": "",
+          "desc": "Muestra los roles permitidos.",
+          "usage": ",tourney roles"
+        }
+      ]
+    }
+  ],
+  "Owner": [
+    {
+      "name": "leaveserver",
+      "desc": "El bot abandona el servidor.",
+      "usage": ",leaveserver <id_servidor>"
+    },
+    {
+      "name": "isinserver",
+      "desc": "Dice si el bot está en el servidor.",
+      "usage": ",isinserver <id_servidor>"
+    },
+    {
+      "name": "servers",
+      "desc": "Lista los servidores en los que está el bot.",
+      "usage": ",servers"
+    }
+  ]
+}

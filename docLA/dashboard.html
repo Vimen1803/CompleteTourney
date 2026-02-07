@@ -1,0 +1,1202 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tourney Bot - Dashboard</title>
+    <link rel="icon" href="https://cdn.discordapp.com/emojis/671348413090234393.png"/>
+    <link rel="stylesheet" href="css/styles.css?v=5" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet"/>
+    <style>
+        a { text-decoration: none; }
+        .dashboard-container { padding: 32px; color: var(--text-normal); }
+        .dashboard-header { margin-bottom: 24px; border-bottom: 1px solid var(--border); padding-bottom: 16px; display: flex; justify-content: space-between; align-items: center;}
+        .dashboard-header h1 { font-size: 2rem; color: var(--text-header); }
+        .dashboard-card { background-color: var(--card-bg); border-radius: 8px; padding: 24px; margin-bottom: 16px; transition: transform 0.2s; border: 1px solid transparent; min-height: 200px; display: flex; flex-direction: column;}
+        .dashboard-card.clickable { cursor: pointer; }
+        .dashboard-card.clickable:hover { transform: translateY(-2px); border-color: var(--accent); }
+        
+        .server-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; }
+        .server-icon { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; margin-bottom: 12px; background: #202225; }
+        .server-card-header { display: flex; flex-direction: column; align-items: center; text-align: center; height: 100%; justify-content: space-between; }
+        .server-card-header h3 { 
+            color: white; 
+            margin-bottom: 8px; 
+            max-height: 3em; 
+            overflow: hidden; 
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+            line-height: 1.5em;
+        }
+        .badge-admin { background: #fee75c; color: #000; padding: 2px 8px; border-radius: 10px; font-size: 0.7em; font-weight: bold; margin-top: 5px; }
+        
+        /* Tabs */
+        .tabs { display: flex; gap: 20px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+        .tab-btn { background: none; border: none; color: var(--text-muted); padding: 10px 0; cursor: pointer; font-size: 1rem; border-bottom: 2px solid transparent; transition: all 0.2s; }
+        .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Forms */
+        .form-group { margin-bottom: 16px; }
+        .form-label { display: block; margin-bottom: 8px; color: var(--text-header); font-weight: 500; }
+        .form-input, .form-select { width: 100%; padding: 10px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 4px; color: white; }
+        .form-input:focus { outline: none; border-color: var(--accent); }
+        
+        .loading-spinner { border: 4px solid rgba(255,255,255,0.1); border-left-color: var(--accent); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 20px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .sidebar-footer {
+            margin-top: auto;
+            padding: 16px;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+        .sidebar-footer a { color: var(--accent); text-decoration: none; }
+        .sidebar-footer a:hover { text-decoration: underline; }
+        .sidebar-actions { margin-bottom: 12px; }
+        
+        /* Active Tournament Hero */
+        .active-tourney-hero {
+            background: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            position: relative;
+            height: 400px; /* Fixed height */
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start; /* Align Top */
+            margin-bottom: 24px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            transition: transform 0.2s;
+        }
+        .active-tourney-hero:hover { transform: scale(1.005); border-color: var(--accent); }
+        
+        .hero-bg {
+            position: absolute; top:0; left:0; right:0; bottom:0;
+            background-size: cover; background-position: center;
+            opacity: 0.3; transition: opacity 0.3s;
+        }
+        .active-tourney-hero:hover .hero-bg { opacity: 0.4; }
+        .hero-overlay {
+            position: relative;
+            z-index: 2;
+            padding: 32px;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.9) 100%);
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .hero-footer {
+            margin-top: auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            width: 100%;
+        }
+
+        /* History Vertical Layout */
+        .carousel-container { 
+            position: relative; 
+            width: 100%;
+        }
+        .history-carousel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(550px, 1fr));
+            gap: 24px;
+            width: 100%;
+        }
+        
+        .tourney-card { 
+            width: 100%; 
+            height: 300px;
+            display: flex; 
+            flex-direction: column;
+            background: var(--card-bg);
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid transparent;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+        .tourney-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        }
+        /* Description fix */
+        .tourney-desc {
+            font-size: 0.9em; 
+            color: var(--text-muted); 
+            margin-bottom: 12px; 
+            flex: 1;
+            white-space: normal;
+            overflow-wrap: break-word; /* Ensure wrapping */
+            overflow-y: auto; /* Scroll if too long */
+        }
+        
+        .badge { padding: 4px 10px; border-radius: 4px; font-size: 0.8em; font-weight: bold; text-transform: uppercase; }
+        .badge.admin { background: #ed4245; color: white; }
+        .badge.mod { background: #5865f2; color: white; }
+        .badge.member { background: #3ba55c; color: white; }
+    </style>
+  </head>
+  <body>
+    <div class="app-container">
+      <!-- Sidebar -->
+      <aside class="sidebar" id="sidebar">
+        <div class="brand">
+            <a href="/" style="text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                <div class="logo-placeholder"><img src="data/image.png" alt="Bot Logo"></div>
+                <h1>Tourney Bot</h1>
+            </a>
+        </div>
+        <div class="nav-links">
+             <a href="/" class="category-item"><i class="fas fa-home"></i> Home</a>
+             <a href="/docs" class="category-item"><i class="fas fa-file-alt"></i> Documentación</a>
+             <div class="nav-header" style="margin-top: 20px;">Panel</div>
+             <a onclick="showServerList()" class="category-item active cursor-pointer"><i class="fas fa-server"></i> Mis Servidores</a>
+             
+             <div class="nav-header" style="margin-top: 20px;">Soporte</div>
+             <a onclick="openBugModal()" class="category-item cursor-pointer" style="color: #faa61a;"><i class="fas fa-bug"></i> Reportar Bug</a>
+             <a onclick="openSuggestionModal()" class="category-item cursor-pointer" style="color: #3ba55c;"><i class="fas fa-lightbulb"></i> Sugerencia</a>
+             <a href="/logout" class="category-item" style="margin-top: auto; color: var(--danger);"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
+        </div>
+        <div class="sidebar-footer">
+          <div class="sidebar-actions" style="margin-bottom: 12px;">
+             <!-- Bot Status -->
+             <a href="/status" class="action-btn secondary" style="width: 100%; justify-content: center; margin-bottom: 8px;"><i class="fas fa-heartbeat"></i> Estado del Bot</a>
+          </div>
+          <p>© 2026 Desarrollado por <a href="https://victormenjon.es" target="_blank">Vimen</a></p>
+        </div>
+      </aside>
+      
+      <!-- Main Content -->
+      <main class="main-content">
+        <header class="top-bar">
+          <button id="menu-toggle" class="menu-toggle"><i class="fas fa-bars"></i></button>
+          <div style="flex:1"></div>
+          <div class="header-actions">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="text-align: right;">
+                    <div id="user-name" style="font-weight: 600; color:white;">Cargando...</div>
+                    <div id="user-id" style="font-size: 0.8em; color: var(--text-muted);">...</div>
+                </div>
+                <div id="user-avatar" style="width: 32px; height: 32px; background: var(--bg-tertiary); border-radius: 50%; overflow:hidden;"></div>
+            </div>
+          </div>
+        </header>
+        
+        <div class="content-wrapper">
+            <!-- VIEW: SERVER LIST -->
+            <div id="view-server-list" class="dashboard-container">
+                <div class="dashboard-header">
+                    <h1>Selecciona un Servidor</h1>
+                    <button onclick="refreshServers()" class="action-btn secondary"><i class="fas fa-sync"></i> Actualizar</button>
+                </div>
+                <div id="server-list-container" class="server-grid">
+                    <div class="loading-spinner"></div>
+                </div>
+            </div>
+
+            <!-- VIEW: SERVER DETAIL -->
+            <div id="view-server-detail" class="dashboard-container" style="display: none;">
+                <div class="dashboard-header">
+                    <div style="display:flex; align-items:center; gap:15px;">
+                        <button onclick="showServerList()" class="action-btn tertiary"><i class="fas fa-arrow-left"></i> Volver</button>
+                        <h1 id="detail-server-name">Nombre Servidor</h1>
+                        <span id="server-role-badge" class="badge"></span>
+                    </div>
+                </div>
+                
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="switchTab('overview')">Resumen</button>
+                    <button class="tab-btn" onclick="switchTab('tournaments')">Torneos</button>
+                    <button class="tab-btn" onclick="switchTab('settings')">Configuración</button>
+                </div>
+
+                <!-- TAB: OVERVIEW -->
+                <div id="tab-overview" class="tab-content active">
+                    <div class="dashboard-card" style="margin-bottom: 24px;">
+                        <h2>Estadísticas Rápidas</h2>
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; margin-top:15px;">
+                            <div style="background:var(--bg-tertiary); padding:15px; border-radius:4px;">
+                                <div style="font-size:0.9em; color:var(--text-muted)">Miembros</div>
+                                <div id="stat-members" style="font-size:1.5em; font-weight:bold;">-</div>
+                            </div>
+                            <div style="background:var(--bg-tertiary); padding:15px; border-radius:4px;">
+                                <div style="font-size:0.9em; color:var(--text-muted)">Estado Bot</div>
+                                <div class="bot-status-indicator" style="font-size:1.5em; font-weight:bold;">--</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="overview-tourney-area"></div>
+                </div>
+
+                <!-- TAB: TOURNAMENTS -->
+                <div id="tab-tournaments" class="tab-content">
+                    <!-- Injected JS -->
+                </div>
+
+                <!-- TAB: SETTINGS -->
+                <div id="tab-settings" class="tab-content">
+                    <div class="dashboard-card">
+                        <h2 style="margin-bottom:20px; color:var(--accent);">Configuración General</h2>
+                        <form id="config-form" onsubmit="saveConfig(event)">
+                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
+                                <div class="form-group">
+                                    <label class="form-label">Prefijo del Bot</label>
+                                    <input type="text" id="cfg-prefix" class="form-input" placeholder=",">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Canal Admin Bot</label>
+                                    <select id="cfg-bot-admin" class="form-select"><option>Cargando...</option></select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Categoría de Torneos</label>
+                                <select id="cfg-category" class="form-select"><option>Cargando...</option></select>
+                            </div>
+                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
+                                <div class="form-group">
+                                    <label class="form-label">Canal Brackets</label>
+                                    <select id="cfg-bracket" class="form-select"><option>Cargando...</option></select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Canal Lobby</label>
+                                    <select id="cfg-lobby" class="form-select"><option>Cargando...</option></select>
+                                </div>
+                            </div>
+                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; align-items:center;">
+                                <div class="form-group" style="margin-bottom:15px;">
+                                    <label class="form-label">Canal Logs</label>
+                                    <select id="cfg-logs" class="form-select"><option>Cargando...</option></select>
+                                </div>
+                                <div class="form-group" style="margin-bottom:15px; display:flex; align-items:center; gap:10px; padding-top:24px;">
+                                    <input type="checkbox" id="cfg-logs-enabled" style="width:20px; height:20px; cursor:pointer;">
+                                    <label for="cfg-logs-enabled" style="color:var(--text-header); cursor:pointer; font-weight:500;">Activar Logs</label>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Roles Admin (IDs separados por coma)</label>
+                                <input type="text" id="cfg-roles" class="form-input" placeholder="12345678, 87654321">
+                            </div>
+                            <button type="submit" class="action-btn primary" style="width:100%; justify-content:center;">Guardar Cambios</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+      </main>
+      
+      <!-- Create Modal -->
+      <div id="modal-create" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeCreateModal()">&times;</button>
+            <h2 class="modal-title">Crear Torneo</h2>
+            <form onsubmit="createTournament(event)">
+                <div class="form-group">
+                    <label class="form-label">Nombre del Torneo</label>
+                    <input type="text" id="new-t-name" class="form-input" placeholder="Ej. Copa Verano" required>
+                </div>
+                 <div class="form-group">
+                    <label class="form-label">Descripción</label>
+                    <input type="text" id="new-t-desc" class="form-input" placeholder="Breve descripción..." required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Máximo de Equipos</label>
+                    <select id="new-t-teams" class="form-select">
+                        <option value="2">2 Equipos</option>
+                        <option value="4">4 Equipos</option>
+                        <option value="8">8 Equipos</option>
+                        <option value="16" selected>16 Equipos</option>
+                        <option value="32">32 Equipos</option>
+                        <option value="64">64 Equipos</option>
+                    </select>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                    <div class="form-group">
+                        <label class="form-label">Min. Miembros</label>
+                        <input type="number" id="new-t-min" class="form-input" value="1" min="1" max="20" required>
+                    </div>
+                     <div class="form-group">
+                        <label class="form-label">Max. Miembros</label>
+                        <input type="number" id="new-t-max" class="form-input" value="1" min="1" max="20" required>
+                    </div>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                    <div class="form-group">
+                        <label class="form-label">Fecha Evento</label>
+                        <input type="date" id="new-t-date" class="form-input" required>
+                    </div>
+                     <div class="form-group">
+                        <label class="form-label">Hora Inicio Torneo</label>
+                        <input type="time" id="new-t-start" class="form-input" required>
+                    </div>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                    <div class="form-group">
+                        <label class="form-label">Inicio Inscripción</label>
+                        <input type="time" id="new-t-reg-start" class="form-input" required>
+                    </div>
+                     <div class="form-group">
+                        <label class="form-label">Fin Inscripción</label>
+                        <input type="time" id="new-t-reg-end" class="form-input" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Imagen del Torneo</label>
+                    <input type="file" id="new-t-img-file" class="form-input" accept="image/*" style="margin-bottom:8px;">
+                    <input type="url" id="new-t-img" class="form-input" placeholder="O pega una URL (http://...)">
+                </div>
+                <button type="submit" class="action-btn primary" style="width:100%; justify-content:center;">Crear</button>
+            </form>
+        </div>
+      </div>
+
+      <!-- Edit Modal (Clone of Create) -->
+      <div id="modal-edit" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeEditModal()">&times;</button>
+            <h2 class="modal-title">Editar Torneo</h2>
+            <form onsubmit="submitEditTournament(event)">
+                <input type="hidden" id="edit-t-id">
+                <div class="form-group">
+                    <label class="form-label">Nombre del Torneo</label>
+                    <input type="text" id="edit-t-name" class="form-input" required>
+                </div>
+                 <div class="form-group">
+                    <label class="form-label">Descripción</label>
+                    <input type="text" id="edit-t-desc" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Máximo de Equipos</label>
+                    <select id="edit-t-teams" class="form-select">
+                        <option value="2">2 Equipos</option>
+                        <option value="4">4 Equipos</option>
+                        <option value="8">8 Equipos</option>
+                        <option value="16">16 Equipos</option>
+                        <option value="32">32 Equipos</option>
+                        <option value="64">64 Equipos</option>
+                    </select>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                    <div class="form-group">
+                        <label class="form-label">Min. Miembros</label>
+                        <input type="number" id="edit-t-min" class="form-input" min="1" max="20" required>
+                    </div>
+                     <div class="form-group">
+                        <label class="form-label">Max. Miembros</label>
+                        <input type="number" id="edit-t-max" class="form-input" min="1" max="20" required>
+                    </div>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                    <div class="form-group">
+                        <label class="form-label">Fecha Evento</label>
+                        <input type="date" id="edit-t-date" class="form-input" required>
+                    </div>
+                     <div class="form-group">
+                        <label class="form-label">Hora Inicio Torneo</label>
+                        <input type="time" id="edit-t-start" class="form-input" required>
+                    </div>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                    <div class="form-group">
+                        <label class="form-label">Inicio Inscripción</label>
+                        <input type="time" id="edit-t-reg-start" class="form-input" required>
+                    </div>
+                     <div class="form-group">
+                        <label class="form-label">Fin Inscripción</label>
+                        <input type="time" id="edit-t-reg-end" class="form-input" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Imagen del Torneo</label>
+                    <input type="file" id="edit-t-img-file" class="form-input" accept="image/*" style="margin-bottom:8px;">
+                    <input type="url" id="edit-t-img" class="form-input" placeholder="O pega una URL (http://...)">
+                </div>
+                <button type="submit" class="action-btn primary" style="width:100%; justify-content:center;">Guardar Cambios</button>
+            </form>
+        </div>
+      </div>
+      </div>
+      
+      <!-- Bug Report Modal -->
+      <div id="modal-bug" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeBugModal()">&times;</button>
+            <h2 class="modal-title" style="color: #faa61a;"><i class="fas fa-bug"></i> Reportar Bug</h2>
+            <p style="color:var(--text-muted); margin-bottom:15px; font-size:0.9em;">Por favor describe el error con detalle. Si es posible, indica pasos para reproducirlo.</p>
+            <form onsubmit="submitBug(event)">
+                <div class="form-group">
+                    <label class="form-label">Descripción del Error</label>
+                    <textarea id="bug-desc" class="form-input" rows="5" placeholder="Ej: Al intentar crear un torneo con fecha pasada..." required></textarea>
+                </div>
+                <button type="submit" class="action-btn primary" style="width:100%; justify-content:center; background-color: #faa61a;">Enviar Reporte</button>
+            </form>
+        </div>
+      </div>
+
+      <!-- Suggestion Modal -->
+      <div id="modal-suggestion" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeSuggestionModal()">&times;</button>
+            <h2 class="modal-title" style="color: #3ba55c;"><i class="fas fa-lightbulb"></i> Hacer Sugerencia</h2>
+             <p style="color:var(--text-muted); margin-bottom:15px; font-size:0.9em;">¡Tus ideas nos ayudan a mejorar! Cuéntanos qué funcionalidad te gustaría ver.</p>
+            <form onsubmit="submitSuggestion(event)">
+                <div class="form-group">
+                    <label class="form-label">Tu Sugerencia</label>
+                    <textarea id="suggestion-desc" class="form-input" rows="5" placeholder="Ej: Me gustaría que los torneos..." required></textarea>
+                </div>
+                <button type="submit" class="action-btn primary" style="width:100%; justify-content:center; background-color: #3ba55c;">Enviar Sugerencia</button>
+            </form>
+        </div>
+      </div>
+    </div>
+
+    <script>
+        let currentGuildId = null;
+        let guildChannels = [];
+        let guildCategories = [];
+
+        async function init() {
+            await fetchUserData();
+            await refreshServers();
+            updateBotStatusGlobal();
+            setInterval(updateBotStatusGlobal, 60000);
+        }
+
+        const HOME_SERVER_ID = '1448450320639197211';
+        
+        async function updateBotStatusGlobal() {
+            const statusEls = document.querySelectorAll('.bot-status-indicator');
+            if(statusEls.length === 0) return;
+
+            try {
+                const response = await fetch(`https://discord.com/api/guilds/${HOME_SERVER_ID}/widget.json`);
+                if (!response.ok) throw new Error('Widget API Error');
+                
+                const data = await response.json();
+                const botMember = data.members.find(member => member.username === 'LA TourneyBot');
+                
+                if (botMember) {
+                     statusEls.forEach(el => {
+                        el.textContent = "Online";
+                        el.style.color = "#4ade80";
+                     });
+                } else {
+                     statusEls.forEach(el => {
+                        el.textContent = "Desconectado";
+                        el.style.color = "#ef4444";
+                     });
+                }
+            } catch(e) {
+                console.error("Bot Status Error", e);
+                statusEls.forEach(el => {
+                    el.textContent = "Desconectado";
+                    el.style.color = "#ef4444"; 
+                });
+            }
+        }
+
+        async function fetchUserData() {
+             try {
+                const res = await fetch('/api/user');
+                if (res.status === 401) {
+                    window.location.href = "/login?redirect=/dashboard";
+                    return;
+                }
+                const user = await res.json();
+                document.getElementById('user-name').textContent = user.username;
+                document.getElementById('user-id').textContent = `ID: ${user.id}`;
+                if(user.avatar) {
+                    document.getElementById('user-avatar').innerHTML = `<img src="https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png" style="width:100%; height:100%;">`;
+                }
+             } catch(e) { console.error(e); }
+        }
+
+        async function refreshServers() {
+            const container = document.getElementById('server-list-container');
+            container.innerHTML = '<div class="loading-spinner"></div>';
+            
+            try {
+                const res = await fetch('/api/guilds');
+                const guilds = await res.json();
+                
+                container.innerHTML = '';
+                if(guilds.length === 0) {
+                    container.innerHTML = '<p>No se encontraron servidores Prueba a actualizar la página.</p>';
+                    return;
+                }
+
+                guilds.forEach(g => {
+                    const card = document.createElement('div');
+                    card.className = 'dashboard-card clickable';
+                    
+                    const isBot = g.bot_in_guild;
+                    const inviteUrl = `https://discord.com/oauth2/authorize?client_id=1448450835213189191&permissions=8&scope=bot&guild_id=${g.id}`;
+                    
+                    if (isBot) {
+                        card.onclick = () => window.location.href = `/server?id=${g.id}`;
+                    } else {
+                        card.onclick = () => window.open(inviteUrl, '_blank');
+                    }
+
+                    const roleLabel = g.role_label || (g.can_manage ? 'Admin' : 'Miembro');
+                    const badgeClass = roleLabel === 'Admin' ? 'admin' : (roleLabel === 'Organizador' ? 'mod' : 'member');
+                    const imgStyle = isBot ? '' : 'filter: grayscale(100%); opacity: 0.7;';
+                    
+                    // Only show badge if bot is in guild
+                    const badgeHtml = isBot ? `<span class="badge ${badgeClass}">${roleLabel}</span>` : '';
+                    const inviteText = !isBot ? '<span style="font-size:0.7em; margin-top:4px; color:var(--accent);">Click para invitar Bot</span>' : '';
+                    
+                    card.innerHTML = `
+                        <div class="server-card-header">
+                            <div style="display: flex; flex-direction: column; align-items: center;">
+                                <img src="${g.icon || 'https://cdn.discordapp.com/embed/avatars/0.png'}" class="server-icon" style="${imgStyle}">
+                                <h3 style="color:white; margin-bottom:4px;">${g.name}</h3>
+                            </div>
+                            <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                                ${badgeHtml}
+                                ${inviteText}
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            } catch(e) {
+                container.innerHTML = '<p style="color:red">Error al cargar servidores.</p>';
+            }
+        }
+
+        async function loadServerDetail(guildId) {
+            currentGuildId = guildId;
+            document.getElementById('view-server-list').style.display = 'none';
+            document.getElementById('view-server-detail').style.display = 'block';
+            
+            // Reset contents
+            document.getElementById('detail-server-name').textContent = "Cargando...";
+            
+            try {
+                const res = await fetch(`/api/guild/${guildId}`);
+                if(!res.ok) {
+                    const errText = await res.text();
+                    throw new Error(`Failed to load: ${res.status} - ${errText}`);
+                }
+                const data = await res.json();
+                currentServerDataCache = data; // Cache data for Edit logic
+                
+                // Populate Data
+                document.getElementById('detail-server-name').textContent = data.guild.name;
+                document.getElementById('stat-members').textContent = data.guild.member_count;
+                
+                // Bot Status is handled globally now via widget api
+                const canManage = data.guild.can_manage;
+                
+                // Badge Logic inside detail
+                const roleLabel = data.guild.role_label;
+                const headerBadge = document.getElementById('server-role-badge');
+                if(headerBadge) {
+                    headerBadge.className = `badge ${roleLabel === 'Admin' ? 'admin' : (roleLabel === 'Organizador' ? 'mod' : 'member')}`;
+                    headerBadge.textContent = roleLabel;
+                }
+
+                // Handle Permissions UI
+                if(!canManage) {
+                     document.querySelector('[onclick="switchTab(\'settings\')"]').style.display = 'none';
+                     if(document.getElementById('tab-settings').classList.contains('active')) switchTab('overview');
+                } else {
+                     document.querySelector('[onclick="switchTab(\'settings\')"]').style.display = 'block';
+                }
+
+                // Store meta for forms
+                guildChannels = data.channels || [];
+                guildCategories = data.categories || [];
+                
+                fillSelect('cfg-category', guildCategories, data.config.category_id);
+                fillSelect('cfg-bracket', guildChannels, data.config.bracket_channel_id);
+                fillSelect('cfg-lobby', guildChannels, data.config.lobby_channel_id);
+                fillSelect('cfg-bot-admin', guildChannels, data.config.bot_admin_channel_id);
+                if(data.config.tourney_log_channel_id) fillSelect('cfg-logs', guildChannels, data.config.tourney_log_channel_id);
+                else fillSelect('cfg-logs', guildChannels, null); 
+                
+                document.getElementById('cfg-prefix').value = data.config.prefix || ",";
+                document.getElementById('cfg-logs-enabled').checked = !!data.config.tourney_logs_enabled;
+                document.getElementById('cfg-roles').value = (data.config.admin_roles || []).join(', ');
+                
+                document.getElementById('cfg-roles').disabled = (roleLabel !== 'Admin');
+
+                // --- OVERVIEW TAB: Active/Last Tournament or Create CTA ---
+                let overviewHTML = '';
+                
+                let heroTourney = data.active_tournament;
+                let isHistory = false;
+                
+                if (!heroTourney && data.history && data.history.length > 0) {
+                    heroTourney = data.history[0]; 
+                    isHistory = true;
+                }
+                
+                if(heroTourney) {
+                    const t = heroTourney;
+                    const statusMap = { 'open': 'Abierto', 'active': 'En Curso', 'finished': 'Finalizado', 'pending': 'En Espera' };
+                    const st = statusMap[t.status] || t.status;
+                    
+                    // improved image logic
+                    let bgStyle = `background-image: linear-gradient(to right, #5865f2, #ed4245);`;
+                    if(t.image_url && t.image_url.trim() !== "" && t.image_url !== "None") {
+                        bgStyle = `background-image: url('${t.image_url}');`;
+                    } else if (g && g.icon) {
+                        bgStyle = `background-image: url('https://cdn.discordapp.com/icons/${g.id}/${g.icon}.png');`;
+                    }
+
+                    let badgeColor = 'var(--text-muted)'; // Default Pending/Gray
+                    if (t.status === 'open' || t.status === 'active') badgeColor = 'var(--success)'; // Green
+                    else if (t.status === 'finished') badgeColor = '#ed4245'; // Red
+                    
+                    // Winner HTML - Only Crown + Name in a yellow badge
+                    const winnerHtml = t.winner_name ? 
+                        `<div class="badge" style="background:#ffd700; color:black; font-size:1em; display:flex; align-items:center; gap:6px; box-shadow:0 2px 4px rgba(0,0,0,0.5);">
+                            <i class="fas fa-crown"></i> ${t.winner_name}
+                         </div>` : '<div></div>'; // Empty div to keep flex spacing if no winner? Actually we can just render nothing
+
+                    let dateDisplay = `<i class="fas fa-calendar"></i> ${t.start_date || 'N/A'}`;
+                    if(t.date) {
+                         dateDisplay = `
+                            <div style="text-align:left; display:flex; flex-direction:column; gap:6px;">
+                                <div><i class="fas fa-calendar" style="width:20px; text-align:center;"></i> ${t.date}</div>
+                                <div style="font-size:0.9em; opacity:0.8"><i class="fas fa-clock" style="width:20px; text-align:center;"></i> Insc: ${t.registration_start_time} - ${t.registration_end_time}</div>
+                                <div style="font-size:0.9em; opacity:0.8"><i class="fas fa-flag" style="width:20px; text-align:center;"></i> Inicio: ${t.start_time}</div>
+                            </div>
+                         `;
+                    }
+
+                    overviewHTML = `
+                        <h3 style="margin-bottom:16px;">${isHistory ? 'Último Torneo Jugado' : 'Torneo Activo'}</h3>
+                        <div class="active-tourney-hero clickable" onclick="window.location.href='/tournament?guild=${currentGuildId}&tourney=${t.id}'">
+                            <div class="hero-bg" style="${bgStyle}"></div>
+                            <div class="hero-overlay">
+                                <!-- Top: Status + Meta -->
+                                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
+                                    <div style="display:flex; gap:16px; font-size:1em; color:rgba(255,255,255,0.9); font-weight:bold; text-shadow:0 1px 2px rgba(0,0,0,0.8);">
+                                        <span class="badge" style="background:${badgeColor}; font-size:0.9em;">${st}</span>
+                                        ${t.winner_name ? winnerHtml : ''}
+                                    </div>
+                                    
+                                    <div style="font-size:0.8em; color:rgba(255,255,255,0.7);">
+                                        ${dateDisplay}
+                                    </div>
+                                </div>
+                                
+                                <!-- Content -->
+                                <h1 style="font-size:2.5rem; margin-bottom:12px; font-weight:800; text-shadow:0 2px 10px rgba(0,0,0,0.5); line-height:1.1;">${t.name}</h1>
+                                
+                                <p style="color:rgba(255,255,255,0.9); font-size:0.95em; max-width:100%; margin-bottom:16px; line-height:1.5; white-space:normal; overflow-wrap:break-word;">
+                                    ${t.description || 'Sin descripción'}
+                                </p>
+                                
+                                <!-- Footer: Winner Left, Details Right -->
+                                <div class="hero-footer">
+                                    <div>
+                                        
+                                        <div style="display:flex; gap:16px; font-size:1em; color:rgba(255,255,255,0.9); font-weight:bold; text-shadow:0 1px 2px rgba(0,0,0,0.8);">
+                                            <span><i class="fas fa-users"></i> ${t.max_teams} Equipos</span>
+                                            <span><i class="fas fa-user-friends"></i> ${t.max_members} vs ${t.max_members}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                     // No active AND No history
+                     if(canManage) {
+                        overviewHTML = `
+                            <div class="dashboard-card" style="text-align:center; padding:60px 20px; border-style:dashed; margin-top:20px;">
+                                <i class="fas fa-trophy" style="font-size:4rem; color:var(--text-muted); margin-bottom:24px; opacity:0.5;"></i>
+                                <h2 style="margin-bottom:12px;">No hay torneos activos</h2>
+                                <p style="margin-bottom:32px; color:var(--text-muted);">¡Crea uno ahora para empezar la competición en tu servidor!</p>
+                                <button onclick="openCreateModal()" class="action-btn primary large" style="width:20%; justify-content:center; border-radius:20px; margin: 0 auto; display: block;"><i class="fas fa-plus"></i> Nuevo Torneo</button>
+                            </div>
+                        `;
+                     } else {
+                         overviewHTML = `<p style="text-align:center; color:var(--text-muted); padding:40px;">No hay torneos activos ni historial reciente en este servidor.</p>`;
+                     }
+                }
+                
+                // Inject into Overview
+                const ovContainer = document.getElementById('overview-tourney-area');
+                if(ovContainer) ovContainer.innerHTML = overviewHTML;
+
+
+                // --- TOURNAMENTS TAB: Create Button + History Carousel ---
+                const tourneysTabContent = document.getElementById('tab-tournaments');
+                
+                let createBtnArea = '';
+                if(canManage) {
+                     createBtnArea = `
+                        <div style="margin-bottom:24px; display:flex; justify-content:flex-end;">
+                            <button onclick="openCreateModal()" class="action-btn primary"><i class="fas fa-plus"></i> Nuevo Torneo</button>
+                        </div>
+                     `;
+                }
+                
+                let historyHTML = '';
+                if(data.history && data.history.length > 0) {
+                     const cards = data.history.map(t => {
+                          const statusMap = { 'open': 'Abierto', 'active': 'En Curso', 'finished': 'Finalizado', 'pending': 'En Espera' };
+                          const st = statusMap[t.status] || t.status;
+                          // Improved image logic for history cards
+                          let bgStyle = `background-image: linear-gradient(to right, #5865f2, #ed4245);`;
+                          if(t.image_url && t.image_url.trim() !== "" && t.image_url !== "None") {
+                              bgStyle = `background-image: url('${t.image_url}');`;
+                          } else if (data.guild && data.guild.icon) { // Use data.guild for the current server's icon
+                              bgStyle = `background-image: url('https://cdn.discordapp.com/icons/${data.guild.id}/${data.guild.icon}.png');`;
+                          }
+
+                          let badgeColor = 'var(--text-muted)'; // Default Pending/Gray
+                          if (t.status === 'open' || t.status === 'active') badgeColor = 'var(--success)';
+                          else if (t.status === 'finished') badgeColor = '#ed4245'; // Red
+                          const date = t.start_date || 'Fecha desconocida';
+
+                          const desc = t.description || 'Sin descripción';
+                          
+                          const winnerHtml = t.winner_name ? 
+                              `<div class="badge" style="background:#ffd700; color:black; font-size:1em; display:flex; align-items:center; gap:6px; box-shadow:0 2px 4px rgba(0,0,0,0.5);">
+                                  <i class="fas fa-crown"></i> ${t.winner_name}
+                               </div>` : '';
+
+                          let dateDisplayH = `<i class="fas fa-calendar"></i> ${date}`;
+                          if(t.date) {
+                               dateDisplayH = `
+                                  <div style="text-align:left; display:flex; flex-direction:column; gap:6px;">
+                                      <div><i class="fas fa-calendar" style="width:20px; text-align:center;"></i> ${t.date}</div>
+                                      <div style="font-size:0.9em; opacity:0.8"><i class="fas fa-clock" style="width:20px; text-align:center;"></i> Insc: ${t.registration_start_time} - ${t.registration_end_time}</div>
+                                      <div style="font-size:0.9em; opacity:0.8"><i class="fas fa-flag" style="width:20px; text-align:center;"></i> Inicio: ${t.start_time}</div>
+                                  </div>
+                               `;
+                          }
+
+                          return `
+                             <div class="active-tourney-hero clickable" onclick="window.location.href='tournament.html?guild=${currentGuildId}&tourney=${t.id}'" style="margin-bottom:0; box-shadow:0 4px 15px rgba(0,0,0,0.3);">
+                                 <div class="hero-bg" style="${bgStyle} background-size:cover; background-position:center;"></div>
+                                 <div class="hero-overlay">
+                                     <!-- Top Row -->
+                                     <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
+                                         <div style="display:flex; gap:16px; font-size:1em; color:rgba(255,255,255,0.9); font-weight:bold; text-shadow:0 1px 2px rgba(0,0,0,0.8);">
+                                             <span class="badge" style="background:${badgeColor}; font-size:0.9em;">${st}</span>
+                                             ${winnerHtml}
+                                         </div>
+                                         <div style="font-size:0.8em; color:rgba(255,255,255,0.7);">
+                                             ${dateDisplayH}
+                                         </div>
+                                     </div>
+                                     
+                                     <!-- Title & Desc -->
+                                     <h1 style="font-size:2.5rem; margin-bottom:12px; font-weight:800; text-shadow:0 2px 10px rgba(0,0,0,0.5); line-height:1.1;">${t.name}</h1>
+                                     <p style="color:rgba(255,255,255,0.9); font-size:0.95em; max-width:100%; margin-bottom:16px; line-height:1.5; white-space:normal; overflow-wrap:break-word;">
+                                         ${desc}
+                                     </p>
+                                     <div class="hero-footer">
+                                         <div>
+                                             <div style="display:flex; gap:16px; font-size:1em; color:rgba(255,255,255,0.9); font-weight:bold; text-shadow:0 1px 2px rgba(0,0,0,0.8);">
+                                                 <span><i class="fas fa-users"></i> ${t.max_teams} Equipos</span>
+                                                 <span><i class="fas fa-user-friends"></i> ${t.max_members} vs ${t.max_members}</span>
+                                             </div>
+                                         </div>
+                                         <div style="display:flex; flex-direction:row; align-items:flex-end; gap:4px;">
+                                             ${canManage ? `<button onclick="event.stopPropagation(); editTournament('${t.id}')" style="background:rgba(0,0,0,0.7); border:none; color:white; padding:10px; border-radius:50%; cursor:pointer; z-index:10; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="Editar Torneo"><i class="fas fa-edit"></i></button>` : ''}
+                                             ${canManage ? `<button onclick="event.stopPropagation(); deleteTournament('${t.id}')" style="background:rgba(0,0,0,0.7); border:none; color:#f04747; padding:10px; border-radius:50%; cursor:pointer; z-index:10; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="Eliminar Torneo"><i class="fas fa-trash"></i></button>` : ''}
+                                        </div>
+                                     </div>
+                                 </div>
+                             </div>
+                          `;
+                      }).join('');
+                      
+                      historyHTML = `
+                         <h3 style="margin-bottom:20px;">Historial de Torneos</h3>
+                         <div class="carousel-container">
+                              <div class="history-carousel" id="history-scroll">
+                                 ${cards}
+                              </div>
+                         </div>
+                      `;
+                } else {
+                    historyHTML = `
+                        <div class="dashboard-card" style="text-align:center; padding:40px; color:var(--text-muted);">
+                            <p>No hay historial de torneos.</p>
+                        </div>`;
+                }
+                
+                tourneysTabContent.innerHTML = createBtnArea + historyHTML;
+
+
+            } catch(e) {
+                console.error(e);
+                alert("Error al actualizar vista: " + e.message);
+                document.getElementById('detail-server-name').textContent = "Error de Conexión";
+                // Do not go back to server list, stay here so user doesn't lose context
+            }
+        }
+        
+        // --- Tournament Actions ---
+        
+        function openCreateModal() {
+            // Set Default Date/Time
+            const now = new Date();
+            const dateInput = document.getElementById('new-t-date');
+            if(dateInput) dateInput.value = now.toISOString().split('T')[0];
+            
+            // Defaults
+            document.getElementById('new-t-reg-start').value = "10:00";
+            document.getElementById('new-t-reg-end').value = "18:00";
+            document.getElementById('new-t-start').value = "18:30";
+            
+            document.getElementById('modal-create').classList.add('active');
+        }
+        
+        function closeCreateModal() {
+            document.getElementById('modal-create').classList.remove('active');
+        }
+
+        async function processImageFile(fileInput) {
+            if(fileInput && fileInput.files && fileInput.files[0]) {
+                const file = fileInput.files[0];
+                if(file.size > 2 * 1024 * 1024) throw new Error("La imagen es muy grande (Max 2MB)");
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => resolve(e.target.result);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(file);
+                });
+            }
+            return null;
+        }
+
+        async function createTournament(e) {
+            e.preventDefault();
+            const name = document.getElementById('new-t-name').value;
+            const teams = document.getElementById('new-t-teams').value;
+            const desc = document.getElementById('new-t-desc').value;
+            const minM = document.getElementById('new-t-min').value;
+            const maxM = document.getElementById('new-t-max').value;
+            
+            const date = document.getElementById('new-t-date').value;
+            const regStart = document.getElementById('new-t-reg-start').value;
+            const regEnd = document.getElementById('new-t-reg-end').value;
+            const startTime = document.getElementById('new-t-start').value;
+            
+            let img = document.getElementById('new-t-img').value; 
+            const fileInput = document.getElementById('new-t-img-file');
+            
+            try {
+                const fileImg = await processImageFile(fileInput);
+                if(fileImg) img = fileImg;
+            } catch(err) {
+                return alert(err.message);
+            }
+            
+            if(!name) return alert("Nombre requerido");
+            
+            try {
+                const res = await fetch(`/api/guild/${currentGuildId}/tournaments/create`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ 
+                        name: name, 
+                        max_teams: teams, 
+                        description: desc,
+                        min_members: minM,
+                        max_members: maxM,
+                        date: date,
+                        reg_start: regStart,
+                        reg_end: regEnd,
+                        start_time: startTime,
+                        image_url: img
+                    })
+                });
+                const data = await res.json();
+                
+                if(res.ok) {
+                    closeCreateModal();
+                    loadServerDetail(currentGuildId); // Reload
+                    alert("Torneo creado!");
+                } else {
+                    alert("Error: " + data.error);
+                }
+            } catch(e) { alert("Error de conexión"); }
+        }
+        
+        let currentServerDataCache = null; // To store loaded data for editing
+
+        function closeEditModal() {
+             document.getElementById('modal-edit').classList.remove('active');
+        }
+
+        function editTournament(id) {
+            // Find tourney in cache (active or history)
+            // We need to access the data loaded in loadServerDetail. 
+            // Currently it is not stored globally, let's fix that by attaching it to window or var
+            // Wait, we can find it in `currentServerDataCache` if we define it in `loadServerDetail`
+            // Let's rely on fetching details or iterating UI? Better fetching details again is cleaner but slower.
+            // Let's modify `loadServerDetail` to store data in `currentServerDataCache`.
+            
+            if(!currentServerDataCache) return;
+
+            let t = null;
+            if (currentServerDataCache.active_tournament && currentServerDataCache.active_tournament.id === id) {
+                t = currentServerDataCache.active_tournament;
+            } else if (currentServerDataCache.history) {
+                t = currentServerDataCache.history.find(x => x.id === id);
+            }
+            
+            if(!t) return alert("Error: Torneo no encontrado en caché");
+
+            document.getElementById('edit-t-id').value = t.id;
+            document.getElementById('edit-t-name').value = t.name;
+            document.getElementById('edit-t-desc').value = t.description || "";
+            document.getElementById('edit-t-teams').value = t.max_teams;
+            document.getElementById('edit-t-min').value = t.min_members || 1;
+            document.getElementById('edit-t-max').value = t.max_members || 1;
+            
+            document.getElementById('edit-t-date').value = t.date || "";
+            document.getElementById('edit-t-reg-start').value = t.registration_start_time || "";
+            document.getElementById('edit-t-reg-end').value = t.registration_end_time || "";
+            document.getElementById('edit-t-start').value = t.start_time || "";
+            
+            document.getElementById('edit-t-img').value = t.image_url || "";
+            
+            document.getElementById('modal-edit').classList.add('active');
+        }
+
+        async function submitEditTournament(e) {
+            e.preventDefault();
+            const id = document.getElementById('edit-t-id').value;
+            const name = document.getElementById('edit-t-name').value;
+            const desc = document.getElementById('edit-t-desc').value;
+            const teams = document.getElementById('edit-t-teams').value;
+            const minM = document.getElementById('edit-t-min').value;
+            const maxM = document.getElementById('edit-t-max').value;
+            
+            const date = document.getElementById('edit-t-date').value;
+            const regStart = document.getElementById('edit-t-reg-start').value;
+            const regEnd = document.getElementById('edit-t-reg-end').value;
+            const startTime = document.getElementById('edit-t-start').value;
+            
+            let img = document.getElementById('edit-t-img').value; 
+            const fileInput = document.getElementById('edit-t-img-file');
+
+            try {
+                const fileImg = await processImageFile(fileInput);
+                if(fileImg) img = fileImg;
+            } catch(err) { return alert(err.message); }
+
+             try {
+                const res = await fetch(`/api/guild/${currentGuildId}/tournament/${id}/update`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ 
+                        name: name, 
+                        description: desc,
+                        max_teams: teams, 
+                        min_members: minM,
+                        max_members: maxM,
+                        date: date,
+                        reg_start: regStart,
+                        reg_end: regEnd,
+                        start_time: startTime,
+                        image_url: img
+                    })
+                });
+                
+                if(res.ok) {
+                    closeEditModal();
+                    loadServerDetail(currentGuildId); 
+                    alert("Torneo actualizado!");
+                } else {
+                    const d = await res.json();
+                    alert("Error: " + d.error);
+                }
+            } catch(e) { alert("Error de conexión"); }
+        }
+
+        async function deleteTournament(id) {
+            if(!confirm("¿Estás seguro de eliminar este torneo? Esta acción es irreversible.")) return;
+            
+            try {
+                 const res = await fetch(`/api/guild/${currentGuildId}/tournament/${id}/delete`, {
+                    method: 'POST'
+                });
+                if(res.ok) {
+                    loadServerDetail(currentGuildId);
+                } else {
+                    alert("Error al eliminar");
+                }
+            } catch(e) { alert("Error de conexión"); }
+        }
+
+        function fillSelect(id, items, selectedValue) { // no funciona siempre sale seleccionar
+            const sel = document.getElementById(id);
+            if(!sel) return;
+            sel.innerHTML = '<option value="">-- Seleccionar --</option>';
+            // console.log(`Filling ${id} with ${items.length} items. Selected:`, selectedValue);
+            items.forEach(i => {
+                const opt = document.createElement('option');
+                opt.value = i.id;
+                opt.textContent = i.name;
+                
+                // Robust comparison
+                const valA = String(i.id).trim();
+                const valB = selectedValue ? String(selectedValue).trim() : "";
+                
+                if(valB && valA === valB) opt.selected = true;
+                sel.appendChild(opt);
+            });
+        }
+
+        async function saveConfig(e) {
+            e.preventDefault();
+            if(!currentGuildId) return;
+            
+            const rolesStr = document.getElementById('cfg-roles').value;
+            const roles = rolesStr.split(',').map(s => s.trim()).filter(s => s);
+            
+            const payload = {
+                prefix: document.getElementById('cfg-prefix').value,
+                category_id: document.getElementById('cfg-category').value,
+                bracket_channel_id: document.getElementById('cfg-bracket').value,
+                lobby_channel_id: document.getElementById('cfg-lobby').value,
+                bot_admin_channel_id: document.getElementById('cfg-bot-admin').value,
+                tourney_log_channel_id: document.getElementById('cfg-logs').value,
+                tourney_logs_enabled: document.getElementById('cfg-logs-enabled').checked,
+                admin_roles: roles
+            };
+            
+            try {
+                const res = await fetch(`/api/guild/${currentGuildId}/config`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+                if(res.ok) alert("Configuración guardada exitosamente");
+                else alert("Error al guardar");
+            } catch(err) {
+                alert("Error de conexión");
+            }
+        }
+
+        function showServerList() {
+            document.getElementById('view-server-detail').style.display = 'none';
+            document.getElementById('view-server-list').style.display = 'block';
+            currentGuildId = null;
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // Sidebar toggle
+        document.getElementById('menu-toggle').addEventListener('click', () => {
+             document.getElementById('sidebar').classList.toggle('open');
+        });
+
+        // --- Bug & Suggestion Logic ---
+        function openBugModal() {
+            document.getElementById('modal-bug').classList.add('active');
+        }
+        function closeBugModal() {
+            document.getElementById('modal-bug').classList.remove('active');
+            document.getElementById('bug-desc').value = "";
+        }
+        
+        async function submitBug(e) {
+            e.preventDefault();
+            const desc = document.getElementById('bug-desc').value;
+            if(!desc) return;
+            
+            // Try to get context (current server)
+            let sId = null;
+            let sName = null;
+            
+            if(currentGuildId && currentServerDataCache && currentServerDataCache.guild) {
+                sId = currentGuildId;
+                sName = currentServerDataCache.guild.name;
+            }
+            
+            try {
+                const res = await fetch('/api/report/bug', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ 
+                        description: desc,
+                        server_id: sId,
+                        server_name: sName
+                    })
+                });
+                if(res.ok) {
+                    alert("¡Reporte enviado! Gracias por ayudarnos.");
+                    closeBugModal();
+                } else {
+                    alert("Error al enviar reporte.");
+                }
+            } catch(e) { alert("Error de conexión"); }
+        }
+
+        function openSuggestionModal() {
+            document.getElementById('modal-suggestion').classList.add('active');
+        }
+        function closeSuggestionModal() {
+            document.getElementById('modal-suggestion').classList.remove('active');
+            document.getElementById('suggestion-desc').value = "";
+        }
+
+        async function submitSuggestion(e) {
+            e.preventDefault();
+            const desc = document.getElementById('suggestion-desc').value;
+            if(!desc) return;
+
+             // Try to get context
+            let sId = null;
+            let sName = null;
+             if(currentGuildId && currentServerDataCache && currentServerDataCache.guild) {
+                sId = currentGuildId;
+                sName = currentServerDataCache.guild.name;
+            }
+
+            try {
+                const res = await fetch('/api/report/suggestion', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ 
+                        description: desc,
+                        server_id: sId,
+                        server_name: sName
+                    })
+                });
+                if(res.ok) {
+                    alert("¡Sugerencia enviada! Gracias por tu aporte.");
+                    closeSuggestionModal();
+                } else {
+                    alert("Error al enviar sugerencia.");
+                }
+            } catch(e) { alert("Error de conexión"); }
+        }
+
+        init();
+    </script>
+    <script src="js/status.js"></script>
+  </body>
+</html>

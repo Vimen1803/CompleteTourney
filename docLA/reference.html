@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tourney Bot Doc</title>
+    <link rel="icon" href="https://cdn.discordapp.com/emojis/671348413090234393.png"/>
+    <link rel="stylesheet" href="css/reference.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&family=Outfit:wght@400;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Prism VS Code Dark Theme -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/themes/prism-vsc-dark-plus.min.css" rel="stylesheet" />
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="brand">
+                <div class="logo-placeholder">
+                    <img src="data/image.png" alt="Bot Logo">
+                </div>
+                <h1>Docs Técnica</h1>
+            </div>
+            <div class="nav-links">
+                <a href="/" class="category-item"><i class="fas fa-arrow-left"></i> Volver al Inicio</a>
+                
+                <div class="nav-header" style="margin-top: 20px;">Módulos</div>
+                <a href="#models" class="category-item">utils/db.py (Modelos)</a>
+                <a href="#dbmanager" class="category-item">utils/db.py (Manager)</a>
+                <a href="#visual" class="category-item">utils/visual.py</a>
+                <a href="#tourney-class" class="category-item">cogs/tourney.py</a>
+                
+                <div class="nav-header" style="margin-top: 20px;">Detalle Clase Tourney</div>
+                <a href="#helpers" class="category-item">Helpers & Checks</a>
+                <a href="#commands" class="category-item">Comandos Principales</a>
+                <a href="#management" class="category-item">Gestión de Equipos</a>
+                <a href="#logic" class="category-item">Lógica de Torneo</a>
+                <a href="#admin" class="category-item">Comandos de Administración</a>
+            </div>
+            
+            <!-- Mobile Only Actions (Hidden on Desktop) -->
+            <div class="mobile-actions" style="display: none;">
+                 <div id="bot-status-mobile-ref" class="status-badge" style="display: flex; align-items: center; gap: 8px; font-size: 0.85em; background: rgba(255,255,255,0.05); padding: 6px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1);">
+                     <span class="status-dot" style="width: 8px; height: 8px; border-radius: 50%; background-color: #6b7280; transition: all 0.3s ease;"></span>
+                     <span class="status-text" style="color: var(--text-muted);">Comprobando...</span>
+                 </div>
+                 <a href="https://discord.com/api/oauth2/authorize?client_id=1448450835213189191&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2Fcallback&response_type=code&scope=identify" class="action-btn primary" target="_blank" style="margin-bottom: 8px;"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                 <a href="https://discord.com/oauth2/authorize?client_id=1448450835213189191" class="action-btn secondary" target="_blank"><i class="fab fa-plus"></i> Añadir Bot</a>
+            </div>
+
+            <div class="sidebar-footer">
+                <div class="sidebar-actions" style="margin-bottom: 12px;">
+                    <a href="https://github.com/Vimen1803/TournamentDiscordBot" class="action-btn primary" style="width: 100%; justify-content: center;" target="_blank"><i class="fab fa-github"></i> GitHub</a>
+                </div>
+                <p>© 2026 Desarrollado por <a href="https://victormenjon.es" target="_blank">Vimen</a></p>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-bar">
+                 <button id="menu-toggle" class="menu-toggle"><i class="fas fa-bars"></i></button>
+                 <div style="flex:1"></div>
+                 <div class="header-actions">
+                    <div id="bot-status" class="status-badge" style="display: flex; align-items: center; gap: 8px; font-size: 0.85em; background: rgba(255,255,255,0.05); padding: 6px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); margin-right: 12px;">
+                         <span class="status-dot" style="width: 8px; height: 8px; border-radius: 50%; background-color: #6b7280; transition: all 0.3s ease;"></span>
+                         <span class="status-text" style="color: var(--text-muted);">Comprobando...</span>
+                    </div>
+                    <a href="https://discord.com/api/oauth2/authorize?client_id=1448450835213189191&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2Fcallback&response_type=code&scope=identify" class="action-btn primary" target="_blank"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                    <a href="https://discord.com/oauth2/authorize?client_id=1448450835213189191" class="action-btn secondary" target="_blank"><i class="fab fa-plus"></i> Añadir Bot</a>
+                 </div>
+            </header>
+
+            <div class="content-wrapper">
+                
+                <section id="intro" class="doc-section">
+                    <h1 class="doc-title">Referencia Técnica Completa</h1>
+                    <p style="color:var(--text-normal); line-height:1.6;">Esta referencia documenta la totalidad de funciones y clases del proyecto. Generada automáticamente a partir del análisis del código fuente.</p>
+                </section>
+
+                <!-- utils/db.py -->
+                <section id="models" class="doc-section">
+                    <h1 class="doc-title">Modelos de Datos (utils/db.py)</h1>
+                    <p class="doc-desc">Estructuras de datos definidas con <code>@dataclass</code> para mapeo Objeto-Documento con MongoDB.</p>
+
+                    <div class="function-block">
+                        <div class="func-header"><span class="func-name">GuildConfig</span></div>
+                        <div class="func-desc">Configuración específica por servidor.</div>
+                        <div class="code-block">
+<pre><code class="language-python"></code>@dataclass
+class GuildConfig:
+    guild_id: int
+    category_id: Optional[int] = None
+    bracket_channel_id: Optional[int] = None
+    lobby_channel_id: Optional[int] = None
+    bot_admin_channel_id: Optional[int] = None
+    prefix: Optional[str] = None
+    admin_roles: List[str] = None</code></pre>
+                        </div>
+                    </div>
+
+                    <div class="function-block">
+                        <div class="func-header"><span class="func-name">Tournament</span></div>
+                        <div class="func-desc">Entidad principal de torneo. Mantiene el estado, rondas y configuración del evento.</div>
+                        <div class="code-block">
+<pre><code class="language-python">@dataclass
+class Tournament:
+    id: str                 # UUID corto (8 chars)
+    name: str               # Nombre display
+    guild_id: int          
+    settings: Dict          # Config snapshot (Deprecated)
+    status: str            # "open", "active", "finished"
+    current_round: int     
+    matches: List[List]    # [Ronda 1 Matches, Ronda 2 Matches...]
+    created_at: datetime
+    created_at: datetime
+    date: str              # Fecha (YYYY-MM-DD)
+    registration_start_time: str # HH:MM
+    registration_end_time: str   # HH:MM
+    start_time: str        # HH:MM (Inicio Torneo)
+    start_date: str        # Legacy/Calculated full string
+    max_teams: int
+    min_members: int
+    max_members: int
+    image_url: str
+    winner_id: str</code></pre>
+                        </div>
+                    </div>
+
+                    <div class="function-block">
+                        <div class="func-header"><span class="func-name">Team</span></div>
+                        <div class="func-desc">Entidad de Equipo.</div>
+                        <div class="code-block">
+<pre><code class="language-python">@dataclass
+class Team:
+    id: str
+    name: str
+    members: List[int] # IDs de Discord
+    leader_id: int
+    tournament_id: str</code></pre>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="dbmanager" class="doc-section">
+                    <h1 class="doc-title">Clase DBManager</h1>
+                    <p class="doc-desc">Clase estática en <code>utils/db.py</code> que encapsula todas las operaciones de base de datos (Motor/MongoDB).</p>
+
+                    <div class="function-block">
+                        <div class="func-header"><span class="func-name">create_tournament(data)</span></div>
+                        <div class="func-desc">Inserta un nuevo documento de torneo en la colección `tournaments`.</div>
+                    </div>
+
+                    <div class="function-block">
+                        <div class="func-header"><span class="func-name">get_tournament(tournament_id)</span></div>
+                        <div class="func-desc">Busca un torneo por su ID único.</div>
+                    </div>
+
+                    <div class="function-block">
+                        <div class="func-header"><span class="func-name">get_active_tournament(guild_id)</span></div>
+                        <div class="func-desc">Retorna el primer torneo del servidor con estado "open" o "active".</div>
+                    </div>
+
+                    <div class="function-block">
+                        <div class="func-header"><span class="func-name">update_tournament(id, update_data)</span></div>
+                        <div class="func-desc">Realiza un update atómico `$set` en el torneo especificado.</div>
+                    </div>
+
+                    <div class="function-block">
+                        <div class="func-header"><span class="func-name">create_team(data)</span></div>
+                        <div class="func-desc">Inserta un nuevo equipo.</div>
+                    </div>
+
+                    <div class="function-block">
+                        <div class="func-header"><span class="func-name">get_team(team_id)</span></div>
+                        <div class="func-desc">Recupera un equipo por ID.</div>
+                    </div>
+
+                     <div class="function-block">
+                        <div class="func-header"><span class="func-name">get_team_by_name(name, tournament_id)</span></div>
+                        <div class="func-desc">Busca un equipo por nombre dentro de un torneo específico (para evitar duplicados).</div>
+                    </div>
+
+                    <div class="function-block">
+                        <div class="func-header"><span class="func-name">get_team_by_member(user_id, tournament_id)</span></div>
+                        <div class="func-desc">Busca si un usuario pertenece a algún equipo en el torneo actual.</div>
+                    </div>
+
+                    <div class="function-block">
+                        <div class="func-header"><span class="func-name">get_teams(tournament_id)</span></div>
+                        <div class="func-desc">Retorna lista de todos los equipos registrados en un torneo.</div>
+                    </div>
+
+                     <div class="function-block">
+                        <div class="func-header"><span class="func-name">delete_team(team_id)</span></div>
+                        <div class="func-desc">Elimina un equipo de la base de datos.</div>
+                    </div>
+                </section>
+
+                <!-- utils/visual.py -->
+                <section id="visual" class="doc-section">
+                    <h1 class="doc-title">Utilidades Visuales (visual.py)</h1>
+                    <p class="doc-desc">Motor de renderizado de Brackets usando Pillow.</p>
+
+                    <div class="function-block">
+                        <div class="func-header">
+                            <span class="func-name">generate_bracket_image</span>
+                            <span class="func-sig">(tourney, current_round, team_names, ...) -> bytes</span>
+                        </div>
+                        <div class="func-desc">función principal. Decide si renderizar un bracket simple o doble basado en el número de equipos (>16). Retorna buffer PNG.</div>
+                    </div>
+
+                    <div class="function-block">
+                        <div class="func-header"><span class="func-name">draw_single_bracket_fixed</span></div>
+                        <div class="func-desc">Renderiza brackets tradicionales de eliminación simple. Calcula la geometría dinámicamente para ajustar al canvas 16:9.</div>
+                    </div>
+
+                    <div class="function-block">
+                        <div class="func-header"><span class="func-name">draw_double_bracket_fixed</span></div>
+                        <div class="func-desc">Renderiza un bracket simétrico (izquierda/derecha) convergiendo al centro para torneos grandes (16/32/64 equipos).</div>
+                    </div>
+
+                    <div class="function-block">
+                        <div class="func-header"><span class="func-name">draw_match_slot</span></div>
+                        <div class="func-desc">
+                            Dibuja una "caja" de partido individual.
+                            <br>Maneja la lógica de colores: 
+                            <span style="color:#ffd700">Amarillo (Campeón)</span>, 
+                            <span style="color:#64c878">Verde (Ganador Ronda)</span>, 
+                            <span style="color:#dcdcdc">Gris (Pendiente/Perdedor)</span>.
+                        </div>
+                    </div>
+                </section>
+
+                <!-- cogs/tourney.py -->
+                <section id="tourney-class" class="doc-section">
+                    <h1 class="doc-title">Módulo Principal (cogs/tourney.py)</h1>
+                </section>
+                    
+                <section id="helpers" class="doc-section">
+                    <h2 class="doc-subtitle">Helpers y Checks</h2>
+
+                    <div class="function-block">
+                        <div class="func-header"><span class="func-name">get_embed(title, description, color, author)</span></div>
+                        <div class="func-desc">Fábrica de Embeds estandarizados con footer y timestamp.</div>
+                    </div>
+
+                    <div class="function-block">
+                        <div class="func-header"><span class="func-name">send_log(guild, tourney_id, title, desc, color)</span></div>
+                        <div class="func-desc">Sistema centralizado de logging. Verifica configuración del servidor y envía embed al canal designado si procede.</div>
+                    </div>
+
+                    <div class="function-block">
+                        <div class="func-header"><span class="func-name">is_admin(ctx) / admin_check(ctx)</span></div>
+                        <div class="func-desc">Check personalizado. Permite ejecución si el usuario es Admin nativo de Discord O si tiene uno de los roles configurados en DB.</div>
+                    </div>
+
+                    <div class="function-block">
+                        <div class="func-header"><span class="func-name">channel_check(ctx)</span></div>
+                        <div class="func-desc">Restringe comandos a canales específicos (Lobby/Admin) si están configurados.</div>
+                    </div>
+                </section>
+
+                <section id="commands" class="doc-section">
+                    <h2 class="doc-subtitle">Comandos de Torneo</h2>
+
+                    <div class="function-block">
+                        <div class="func-header"><span class="func-name">create_tourney(ctx, args)</span></div>
+                        <div class="func-desc">
+                            Parsea string de argumentos separados por `|`. Valida integridad de datos (potencias de 2, ints).
+                            <br>Crea documento `Tournament` y lo guarda.
+                        </div>
+                    </div>
+
+                    <div class="function-block">
+                        <div class="func-header"><span class="func-name">delete_tourney(ctx, tourney_id)</span></div>
+                        <div class="func-desc">Elimina torneo en cascada (Torneo + Equipos + Configuraciones vinculadas).</div>
+                    </div>
+
+                    <div class="function-block">
+                        <div class="func-header"><span class="func-name">start_tourney(ctx, tourney_id)</span></div>
+                        <div class="func-desc">
+                            Inicia el torneo.
+                            <ul>
+                                <li>Cierra registros.</li>
+                                <li>Genera estructura de matches inicial (Ronda 1) con algoritmo de Seeding/BYE.</li>
+                                <li>Llama a <code>process_round</code>.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="management" class="doc-section">
+                    <h2 class="doc-subtitle">Gestión de Equipos</h2>
+
+                    <div class="function-block">
+                        <div class="func-header"><span class="func-name">register_team(ctx, name, members)</span></div>
+                        <div class="func-desc">Inicia proceso de registro. Valida restricciones. Crea <code>PendingTeam</code> y envía <code>ConfirmRegistrationView</code> por DM.</div>
+                    </div>
+
+                    <div class="function-block">
+                        <div class="func-header"><span class="func-name">create_team_final(pending_id)</span></div>
+                        <div class="func-desc">Callback ejecutado cuando todos confirman. Crea el equipo en DB y notifica.</div>
+                    </div>
+
+                    <div class="function-block">
+                        <div class="func-header"><span class="func-name">invite_member(ctx, user)</span></div>
+                        <div class="func-desc">Permite a líderes invitar gente post-creación si hay hueco. Usa <code>ConfirmInviteView</code>.</div>
+                    </div>
+                </section>
+
+                <section id="logic" class="doc-section">
+                    <h2 class="doc-subtitle">Lógica Core de Torneo</h2>
+
+                    <div class="function-block">
+                        <div class="func-header"><span class="func-name">process_round(ctx, tourney)</span></div>
+                        <div class="func-desc">
+                            Ejecutado al iniciar cada ronda.
+                            <ol>
+                                <li>Genera/Actualiza imagen Bracket.</li>
+                                <li>Genera canales de texto privados para cada enfrentamiento no resuelto.</li>
+                                <li>Gestiona permisos de canales.</li>
+                            </ol>
+                        </div>
+                    </div>
+
+                    <div class="function-block">
+                        <div class="func-header"><span class="func-name">set_winner_cmd(ctx, member)</span></div>
+                        <div class="func-desc">
+                            Establece ganador de un match basado en un miembro.
+                            <br>Si todos los matches de la ronda tienen ganador -> llama a `advance_round`.
+                        </div>
+                    </div>
+
+                    <div class="function-block">
+                        <div class="func-header"><span class="func-name">advance_round(ctx, tourney)</span></div>
+                        <div class="func-desc">
+                            Avanza a la siguiente ronda.
+                            <ul>
+                                <li>Si es final -> Declara ganador, actualiza DB, genera bracket final (Oro).</li>
+                                <li>Si no -> Genera cruces de siguiente ronda basándose en ganadores previos.</li>
+                                <li>Llama recursivamente a `process_round`.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                 <section id="admin" class="doc-section">
+                    <h1 class="doc-title">Comandos de Administración</h1>
+                    
+                    <div class="function-block">
+                        <div class="func-header"><span class="func-name">show_settings(ctx)</span></div>
+                        <div class="func-desc">Muestra configuración actual del guild (canales, roles).</div>
+                    </div>
+                     <div class="function-block">
+                        <div class="func-header"><span class="func-name">set_[category/bracket/lobby/ bot_admin/logs/prefix](ctx, id)</span></div>
+                        <div class="func-desc">Familia de comandos para actualizar cada campo de `GuildConfig`.</div>
+                    </div>
+                    <div class="function-block">
+                        <div class="func-header"><span class="func-name">roles_group (add/remove)</span></div>
+                        <div class="func-desc">Gestiona la lista de roles permitidos para administrar el bot.</div>
+                    </div>
+                    <div class="function-block">
+                        <div class="func-header"><span class="func-name">report_bug(ctx, description)</span></div>
+                        <div class="func-desc">Envía embed al canal de bugs centralizado definido en config global.</div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+    <script src="js/status.js"></script>
+    <!-- Prism.js Core & Python -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/components/prism-python.min.js"></script>
+    <script src="js/reference.js"></script>
+    <script>
+        document.getElementById('menu-toggle').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.toggle('open');
+        });
+    </script>
+</body>
+</html>
