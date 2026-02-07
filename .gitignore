@@ -36,3 +36,5 @@ configOLD.py
 # OS
 .DS_Store
 Thumbs.db
+.vscode
+.vscode/settings.json
