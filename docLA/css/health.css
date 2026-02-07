@@ -1,0 +1,325 @@
+:root {
+    --bg-body: #05070a;
+    --bg-panel: rgba(26, 31, 46, 0.6);
+    --border-color: rgba(255, 255, 255, 0.08);
+    --text-primary: #ffffff;
+    --text-secondary: #94a3b8;
+    
+    --success: #22c55e;
+    --success-glow: rgba(34, 197, 94, 0.5);
+    --danger: #ef4444;
+    --danger-glow: rgba(239, 68, 68, 0.5);
+    --warning: #eab308;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-body);
+    background-image: 
+        radial-gradient(circle at 50% 0%, #1a2035 0%, transparent 50%),
+        linear-gradient(180deg, var(--bg-body) 0%, #0a0c10 100%);
+    color: var(--text-primary);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Navbar / Logo */
+.navbar {
+    width: 100%;
+    padding: 24px 40px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    max-width: 1400px;
+}
+
+.logo-icon {
+    font-size: 24px;
+    color: var(--text-primary);
+}
+
+.logo-text {
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+/* Container principal */
+.container {
+    width: 100%;
+    max-width: 1200px;
+    padding: 40px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+}
+
+/* Header Text */
+.page-header {
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.page-header h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+}
+
+.page-header p {
+    color: var(--text-secondary);
+    font-size: 1rem;
+}
+
+/* HERO CARD (Full Width) */
+.hero-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+/* El resplandor (Glow) detrás de la tarjeta */
+.hero-glow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 105%;
+    height: 105%;
+    border-radius: 24px;
+    filter: blur(40px);
+    opacity: 0.6;
+    z-index: 0;
+    transition: background 0.5s ease;
+}
+
+.hero-glow.danger { background: var(--danger-glow); }
+.hero-glow.success { background: var(--success-glow); }
+
+.hero-card {
+    position: relative;
+    z-index: 1;
+    background: var(--bg-panel);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border-color);
+    border-radius: 24px;
+    padding: 40px;
+    display: grid;
+    grid-template-columns: 1fr 1px 1fr; /* Izquierda | Separador | Derecha */
+    align-items: center;
+    gap: 40px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+}
+
+.hero-divider {
+    width: 1px;
+    height: 80px;
+    background: var(--border-color);
+}
+
+/* Lado Izquierdo: Estado */
+.status-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.status-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 24px;
+}
+
+.big-pulse {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.pulse-dot {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--danger);
+    box-shadow: 0 0 20px var(--danger);
+    z-index: 2;
+    transition: all 0.3s ease;
+}
+
+.pulse-ring {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 2px solid var(--danger);
+    opacity: 0;
+    animation: ripple 2s infinite;
+}
+
+.big-pulse.online .pulse-dot {
+    background: var(--success);
+    box-shadow: 0 0 20px var(--success);
+}
+.big-pulse.online .pulse-ring { border-color: var(--success); }
+
+@keyframes ripple {
+    0% { transform: scale(0.5); opacity: 1; }
+    100% { transform: scale(1.5); opacity: 0; }
+}
+
+.status-message {
+    font-size: 1rem;
+    color: var(--text-secondary);
+}
+
+/* Lado Derecho: Latencia */
+.latency-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    height: 100%;
+    justify-content: space-between;
+}
+
+.latency-number {
+    font-size: 4rem;
+    font-weight: 700;
+    line-height: 1;
+    margin: 10px 0;
+    background: linear-gradient(180deg, #fff 0%, #aaa 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.latency-unit {
+    font-size: 1.5rem;
+    color: var(--text-secondary);
+    font-weight: 400;
+}
+
+/* Wave Chart Simulation */
+.wave-chart {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 6px;
+    height: 60px;
+    width: 100%;
+    max-width: 300px;
+    margin-top: 20px;
+}
+
+.wave-bar {
+    width: 4px;
+    background: var(--danger);
+    border-radius: 2px;
+    opacity: 0.6;
+    transition: height 0.3s ease, background 0.3s ease;
+    box-shadow: 0 0 8px var(--danger-glow);
+}
+
+.wave-chart.online .wave-bar {
+    background: var(--success);
+    box-shadow: 0 0 8px var(--success-glow);
+}
+
+/* History Section */
+.history-section {
+    width: 100%;
+}
+
+.section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 16px;
+    padding-left: 8px;
+}
+
+.history-list {
+    background: var(--bg-panel);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    overflow: hidden;
+    backdrop-filter: blur(12px);
+}
+
+.history-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border-color);
+    transition: background 0.2s;
+}
+
+.history-item:last-child { border-bottom: none; }
+.history-item:hover { background: rgba(255,255,255,0.03); }
+
+.h-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.h-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--danger);
+    box-shadow: 0 0 5px var(--danger);
+}
+.h-dot.online { 
+    background: var(--success); 
+    box-shadow: 0 0 5px var(--success);
+}
+
+.h-time {
+    color: var(--text-primary);
+    font-size: 0.95rem;
+}
+
+.h-latency {
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    color: var(--danger);
+}
+.h-latency.online { color: var(--success); }
+
+/* Responsive */
+@media (max-width: 768px) {
+    .hero-card {
+        grid-template-columns: 1fr;
+        gap: 30px;
+        padding: 30px 20px;
+    }
+    .hero-divider {
+        width: 100%;
+        height: 1px;
+    }
+    .navbar {
+        padding: 20px;
+    }
+}
+
+.loading-state {
+    padding: 20px;
+    text-align: center;
+    color: var(--text-secondary);
+}
