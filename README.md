@@ -1,55 +1,50 @@
-<div align="center" style="font-family: 'Inter', sans-serif; background-color: #0a0e1a; color: #fff; padding: 20px;">
-  
-  <!-- Navbar Simulation -->
-  <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px 8%; background: rgba(10, 14, 26, 0.7); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255, 255, 255, 0.05); margin-bottom: 40px;">
-    <div style="font-size: 1.5rem; font-weight: 900; color: #fff; display: flex; align-items: center; gap: 12px;">
-      <img src="img/image.png" height="40" style="vertical-align: middle;">
-      <span>Tourney Bot</span>
-    </div>
-    <div style="display: flex; gap: 20px;">
-      <a href="https://tourneydoc.victormenjon.es/docs" style="color: #94a3b8; text-decoration: none; font-weight: 500;">Documentation</a>
-      <a href="https://victormenjon.es" style="color: #94a3b8; text-decoration: none; font-weight: 500;">My Website</a>
-      <a href="mailto:[victormnjfan@gmail.com]" style="color: #94a3b8; text-decoration: none; font-weight: 500;">Contact</a>
-    </div>
-    <a href="https://discord.com/oauth2/authorize?client_id=1448450835213189191&permissions=8&scope=bot" style="background: linear-gradient(135deg, #5865f2 0%, #7289da 100%); color: white; padding: 8px 20px; border-radius: 12px; text-decoration: none; font-weight: 600;">
-      Invite Bot
+<div align="center">
+  <img src="img/image.png" alt="Tourney Bot" height="60">
+  <h1>Tourney Bot</h1>
+  <p>
+    <b>Advanced Discord Bot for Comprehensive Tournament Management</b>
+  </p>
+  <p>
+    <a href="https://tourneydoc.victormenjon.es/docs">Documentation</a> •
+    <a href="https://victormenjon.es">Website</a> •
+    <a href="mailto:victormnjfan@gmail.com">Contact</a>
+  </p>
+  <p>
+    <a href="https://discord.com/oauth2/authorize?client_id=1448450835213189191&permissions=8&scope=bot">
+      <img src="https://img.shields.io/badge/Invite_Bot-5865F2?style=for-the-badge&logo=discord&logoColor=white" height="30">
     </a>
-  </div>
+  </p>
+</div>
 
-  <!-- Hero Section -->
-  <table style="border: none; background: transparent; width: 100%;">
-    <tr>
-      <td width="55%" style="border: none; padding-right: 40px;">
-        <h1 style="font-size: 4rem; line-height: 1.1; margin-bottom: 28px; font-weight: 900; color: #fff;">
-          Organize<br>Tournaments<br><span>on </span><span style="color: #5865f2;">Discord</span>
-        </h1>
-        <p style="font-size: 1.3rem; color: #94a3b8; margin-bottom: 40px; line-height: 1.6;">
-          The definitive solution for managing eSports competitions, friendly leagues, and automated brackets directly from your server.
-        </p>
-        <div style="display: flex; gap: 20px;">
-          <a href="https://tourneydoc.victormenjon.es/" style="background: linear-gradient(135deg, #5865f2 0%, #7289da 100%); color: white; padding: 12px 28px; border-radius: 12px; text-decoration: none; font-weight: 600; display: inline-block;">
-            🚀 Start Now
-          </a>
-          <a href="https://tourneydoc.victormenjon.es/status" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: white; padding: 12px 28px; border-radius: 12px; text-decoration: none; font-weight: 600; display: inline-block;">
-            📈 Bot Status
-          </a>
-        </div>
-      </td>
-      <td width="45%" style="border: none;">
-        <div style="background: linear-gradient(135deg, rgba(30, 41, 59, 0.5) 0%, rgba(15, 23, 42, 0.5) 100%); border-radius: 32px; padding: 20px; border: 1px solid rgba(255, 255, 255, 0.05); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);">
-          <img src="img/imageWeb.png" width="100%" style="border-radius: 12px;">
-          <p style="text-align: center; color: #6c757d; font-size: 12px; margin-top: 10px;"><i>Modern Dashboard Preview</i></p>
-        </div>
-      </td>
-    </tr>
-  </table>
+<br>
 
-<br><br><br>
+<table border="0">
+  <tr>
+    <td width="60%" valign="middle">
+      <h1 align="left">Organize<br>Tournaments<br>on Discord</h1>
+      <p align="left">
+        The complete solution for eSports competitions, friendly leagues, and automated brackets directly in your server.
+      </p>
+      <p align="left">
+        <a href="https://discord.com/oauth2/authorize?client_id=1448450835213189191&permissions=8&scope=bot">
+          <img src="https://img.shields.io/badge/🚀_Start_Now-5865F2?style=for-the-badge&color=5865F2">
+        </a>
+        <a href="https://tourneydoc.victormenjon.es/status">
+          <img src="https://img.shields.io/badge/📈_Status-212529?style=for-the-badge&logo=statuspage&logoColor=white">
+        </a>
+      </p>
+    </td>
+    <td width="40%" valign="middle">
+      <img src="img/imageWeb.png" width="100%">
+      <p align="center"><i>Modern Web Dashboard</i></p>
+    </td>
+  </tr>
+</table>
 
-  <!-- Footer -->
-  <div style="padding: 64px 8%; border-top: 1px solid rgba(255,255,255,0.05); margin-top: -60px;">
-    <p style="color: #94a3b8;">© 2026 Tourney Bot. Developed by <a href="https://victormenjon.es" style="color: #5865f2; text-decoration: none;">Victor Menjon</a></p>
-    <p style="color: #94a3b8;">All rights reserved.</p>
-  </div>
+<br>
+<hr>
+<br>
 
+<div align="center">
+  <p>© 2026 Tourney Bot • Developed by <a href="https://victormenjon.es">Victor Menjon</a></p><p>All rights reserved.</p>
 </div>
