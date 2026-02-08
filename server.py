@@ -716,6 +716,7 @@ async def perform_health_check():
             "latency": latency,
             "status": status
         })
+        print(f"Health Check Performed. Latency: {latency}s | Status: {status}")
     except Exception as e:
         print(f"Health Check Error: {e}")
 
@@ -760,6 +761,7 @@ async def health_check_loop():
             await asyncio.sleep(delay_seconds)
             
         except asyncio.CancelledError:
+            print("Health Check Loop Cancelled")
             break
         except Exception as e:
             print(f"Health Check Loop Error: {e}")
