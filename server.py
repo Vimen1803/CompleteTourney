@@ -725,9 +725,9 @@ async def health_check_loop():
     2. Runs at next :00.
     3. Runs every LOOP_TIME minutes thereafter.
     """
-    # 1. Run immediately on startup
-    print("Performing startup health check...")
-    await perform_health_check()
+    # 1. Run immediately on startup (DISABLED)
+    # print("Performing startup health check...")
+    # await perform_health_check()
     
     # 2. Wait for next peak (:00)
     now = datetime.utcnow()
