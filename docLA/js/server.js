@@ -16,21 +16,15 @@ if (!currentGuildId) {
 }
 
 // Check if user is logged in
-try {
-    const userRes = await fetch("/api/user");
-    if (userRes.ok) {
-    currentUser = await userRes.json();
-    isLoggedIn = true;
-    document.getElementById("user-section").innerHTML = `
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <span style="color: white;">${currentUser.username}</span>
-                    <img src="${currentUser.avatar ? `https://cdn.discordapp.com/avatars/${currentUser.id}/${currentUser.avatar}.png` : "https://cdn.discordapp.com/embed/avatars/0.png"}" 
-                            style="width: 32px; height: 32px; border-radius: 50%;">
-                    <a href="/logout" style="color: #ed4245; padding: 6px 12px; background: transparent; border: none; cursor: pointer; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'"><i class="fas fa-sign-out-alt"></i></a>
-                </div>
-            `;
-    }
-} catch (e) {}
+    // Auth handled by layout.js
+    // Check login state for local banner logic via API response or global check
+    try {
+        const userRes = await fetch("/api/user");
+        if (userRes.ok) {
+            currentUser = await userRes.json();
+            isLoggedIn = true;
+        }
+    } catch (e) {}
 
 await loadServerDetail();
 

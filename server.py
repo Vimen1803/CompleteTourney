@@ -996,12 +996,16 @@ async def get_tournament_details(guild_id: int, tournament_id: str, request: Req
                 "is_leader": is_leader
             })
         
-        # Sort so leader is first
+    # Sort so leader is first
         resolved_members.sort(key=lambda x: not x['is_leader'])
         t['resolved_members'] = resolved_members
         
         cleaned_teams.append(t)
     
+    # Ensure guild_id is string for JS precision
+    if 'guild_id' in tourney:
+        tourney['guild_id'] = str(tourney['guild_id'])
+
     # Include is_logged_in flag for frontend
     return JSONResponse(content={
         "tournament": tourney, 

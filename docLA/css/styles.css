@@ -92,10 +92,12 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  text-decoration: none;
 }
 .category-item:hover {
   background-color: var(--bg-secondary);
   color: var(--text-normal);
+  text-decoration: none;
 }
 .category-item.active {
   background-color: rgba(88, 101, 242, 0.1);

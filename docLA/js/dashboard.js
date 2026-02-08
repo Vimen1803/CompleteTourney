@@ -3,7 +3,7 @@ let guildChannels = [];
 let guildCategories = [];
 
 async function init() {
-    await fetchUserData();
+// User data fetched by layout.js
     await refreshServers();
     updateBotStatusGlobal();
     setInterval(updateBotStatusGlobal, 60000);
@@ -42,21 +42,7 @@ async function updateBotStatusGlobal() {
     }
 }
 
-async function fetchUserData() {
-        try {
-        const res = await fetch('/api/user');
-        if (res.status === 401) {
-            window.location.href = "/login?redirect=/dashboard";
-            return;
-        }
-        const user = await res.json();
-        document.getElementById('user-name').textContent = user.username;
-        document.getElementById('user-id').textContent = `ID: ${user.id}`;
-        if(user.avatar) {
-            document.getElementById('user-avatar').innerHTML = `<img src="https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png" style="width:100%; height:100%;">`;
-        }
-        } catch(e) { console.error(e); }
-}
+// fetchUserData is now handled by layout.js
 
 async function refreshServers() {
     const container = document.getElementById('server-list-container');
@@ -643,90 +629,8 @@ function switchTab(tabId) {
 }
 
 // Sidebar toggle
-document.getElementById('menu-toggle').addEventListener('click', () => {
-        document.getElementById('sidebar').classList.toggle('open');
-});
+// Sidebar toggle handled by layout.js
 
-// --- Bug & Suggestion Logic ---
-function openBugModal() {
-    document.getElementById('modal-bug').classList.add('active');
-}
-function closeBugModal() {
-    document.getElementById('modal-bug').classList.remove('active');
-    document.getElementById('bug-desc').value = "";
-}
-
-async function submitBug(e) {
-    e.preventDefault();
-    const desc = document.getElementById('bug-desc').value;
-    if(!desc) return;
-    
-    // Try to get context (current server)
-    let sId = null;
-    let sName = null;
-    
-    if(currentGuildId && currentServerDataCache && currentServerDataCache.guild) {
-        sId = currentGuildId;
-        sName = currentServerDataCache.guild.name;
-    }
-    
-    try {
-        const res = await fetch('/api/report/bug', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ 
-                description: desc,
-                server_id: sId,
-                server_name: sName
-            })
-        });
-        if(res.ok) {
-            alert("¡Reporte enviado! Gracias por ayudarnos.");
-            closeBugModal();
-        } else {
-            alert("Error al enviar reporte.");
-        }
-    } catch(e) { alert("Error de conexión"); }
-}
-
-function openSuggestionModal() {
-    document.getElementById('modal-suggestion').classList.add('active');
-}
-function closeSuggestionModal() {
-    document.getElementById('modal-suggestion').classList.remove('active');
-    document.getElementById('suggestion-desc').value = "";
-}
-
-async function submitSuggestion(e) {
-    e.preventDefault();
-    const desc = document.getElementById('suggestion-desc').value;
-    if(!desc) return;
-
-        // Try to get context
-    let sId = null;
-    let sName = null;
-        if(currentGuildId && currentServerDataCache && currentServerDataCache.guild) {
-        sId = currentGuildId;
-        sName = currentServerDataCache.guild.name;
-    }
-
-    try {
-        const res = await fetch('/api/report/suggestion', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ 
-                description: desc,
-                server_id: sId,
-                server_name: sName
-            })
-        });
-        if(res.ok) {
-            alert("¡Sugerencia enviada! Gracias por tu aporte.");
-            closeSuggestionModal();
-        } else {
-            alert("Error al enviar sugerencia.");
-        }
-    } catch(e) { alert("Error de conexión"); }
-}
+// Bug & Suggestion Logic handled by layout.js
 
 init();

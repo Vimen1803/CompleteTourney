@@ -449,39 +449,10 @@
       </div>
       </div>
       
-      <!-- Bug Report Modal -->
-      <div id="modal-bug" class="modal-overlay">
-        <div class="modal-content">
-            <button class="modal-close" onclick="closeBugModal()">&times;</button>
-            <h2 class="modal-title" style="color: #faa61a;"><i class="fas fa-bug"></i> Reportar Bug</h2>
-            <p style="color:var(--text-muted); margin-bottom:15px; font-size:0.9em;">Por favor describe el error con detalle. Si es posible, indica pasos para reproducirlo.</p>
-            <form onsubmit="submitBug(event)">
-                <div class="form-group">
-                    <label class="form-label">Descripción del Error</label>
-                    <textarea id="bug-desc" class="form-input" rows="5" placeholder="Ej: Al intentar crear un torneo con fecha pasada..." required></textarea>
-                </div>
-                <button type="submit" class="action-btn primary" style="width:100%; justify-content:center; background-color: #faa61a;">Enviar Reporte</button>
-            </form>
-        </div>
-      </div>
 
-      <!-- Suggestion Modal -->
-      <div id="modal-suggestion" class="modal-overlay">
-        <div class="modal-content">
-            <button class="modal-close" onclick="closeSuggestionModal()">&times;</button>
-            <h2 class="modal-title" style="color: #3ba55c;"><i class="fas fa-lightbulb"></i> Hacer Sugerencia</h2>
-             <p style="color:var(--text-muted); margin-bottom:15px; font-size:0.9em;">¡Tus ideas nos ayudan a mejorar! Cuéntanos qué funcionalidad te gustaría ver.</p>
-            <form onsubmit="submitSuggestion(event)">
-                <div class="form-group">
-                    <label class="form-label">Tu Sugerencia</label>
-                    <textarea id="suggestion-desc" class="form-input" rows="5" placeholder="Ej: Me gustaría que los torneos..." required></textarea>
-                </div>
-                <button type="submit" class="action-btn primary" style="width:100%; justify-content:center; background-color: #3ba55c;">Enviar Sugerencia</button>
-            </form>
-        </div>
-      </div>
     </div>
 
+    <script src="js/layout.js"></script>
     <script src="js/dashboard.js"></script>
   </body>
 </html>

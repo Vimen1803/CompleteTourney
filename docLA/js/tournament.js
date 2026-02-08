@@ -52,21 +52,8 @@ async function loadTournament(force = false) {
     }
 
     // Check if user is logged in
-    try {
-        const userRes = await fetch('/api/user');
-        const userSection = document.getElementById('user-section');
-        if (userRes.ok) {
-            const currentUser = await userRes.json();
-                userSection.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <span style="color: white;">${currentUser.username}</span>
-                    <img src="${currentUser.avatar ? `https://cdn.discordapp.com/avatars/${currentUser.id}/${currentUser.avatar}.png` : 'https://cdn.discordapp.com/embed/avatars/0.png'}" 
-                            style="width: 32px; height: 32px; border-radius: 50%;">
-                    <a href="/logout" style="color: #ed4245; padding: 6px 12px; background: transparent; border: none; cursor: pointer; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'"><i class="fas fa-sign-out-alt"></i></a>
-                </div>
-            `;
-        }
-    } catch(e) { }
+    // Check if user is logged in (Data is already in data.is_logged_in from tournament fetch)
+    // Legacy user-section update removed as it's handled by layout.js
 
     try {
         const res = await fetch(`/api/guild/${guildId}/tournament/${tourneyId}`);
@@ -233,7 +220,7 @@ async function loadTournament(force = false) {
                 </div>
             </div>
             
-            <div id="tab-matchups" style="display: ${matchupsDisplay}; min-height: calc(100vh - 100px); align-items: center; justify-content: center; border-radius: 12px;width:112%; margin-left: -70px; ${bracketStyle}"></div>
+            <div id="tab-matchups" style="display: ${matchupsDisplay}; min-height: calc(100vh - 200px); width: 100%; align-items: center; justify-content: center; border-radius: 12px; ${bracketStyle}"></div>
         `;
     } catch(e) {
         console.error(e);

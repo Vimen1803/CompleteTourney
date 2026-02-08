@@ -30,17 +30,51 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet"/>
   </head>
   <body>
-    <!-- Navbar -->
-    <div style="background: var(--bg-secondary); padding: 16px 32px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
-      <div style="display: flex; align-items: center; gap: 16px">
-        <a href="/" style="font-weight: bold; font-size: 1.2rem; color: white; text-decoration: none; display: flex; align-items: center; gap: 10px;"><img src="/data/image.png" style="width: 28px; height: 28px; border-radius: 50%;" alt="Logo">Tourney Bot</a>
-      </div>
-      <div style="display: flex; align-items: center; gap: 12px">
-        <div id="user-section"></div>
-      </div>
-    </div>
+    <div class="app-container">
+      <!-- Sidebar -->
+      <aside class="sidebar" id="sidebar">
+        <div class="brand">
+            <a href="/" style="text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                <div class="logo-placeholder"><img src="data/image.png" alt="Bot Logo"></div>
+                <h1>Tourney Bot</h1>
+            </a>
+        </div>
+        <div class="nav-links">
+             <a href="/" class="category-item"><i class="fas fa-home"></i> Home</a>
+             <a href="/docs" class="category-item"><i class="fas fa-file-alt"></i> Documentación</a>
+             <div class="nav-header" style="margin-top: 20px;">Panel</div>
+             <a href="/dashboard" class="category-item cursor-pointer"><i class="fas fa-server"></i> Mis Servidores</a>
+             
+             <div class="nav-header" style="margin-top: 20px;">Soporte</div>
+             <a onclick="openBugModal()" class="category-item cursor-pointer" style="color: #faa61a;"><i class="fas fa-bug"></i> Reportar Bug</a>
+             <a onclick="openSuggestionModal()" class="category-item cursor-pointer" style="color: #3ba55c;"><i class="fas fa-lightbulb"></i> Sugerencia</a>
+             <a href="/logout" class="category-item" style="margin-top: auto; color: var(--danger);"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
+        </div>
+        <div class="sidebar-footer">
+          <div class="sidebar-actions" style="margin-bottom: 12px;">
+             <a href="/status" class="action-btn secondary" style="width: 100%; justify-content: center; margin-bottom: 8px;"><i class="fas fa-heartbeat"></i> Estado del Bot</a>
+          </div>
+          <p>© 2026 Desarrollado por <a href="https://victormenjon.es" target="_blank">Vimen</a></p>
+        </div>
+      </aside>
 
-    <div id="content" class="dashboard-container" style="max-width: 1400px; margin: 0 auto">
+      <!-- Main Content -->
+      <main class="main-content">
+        <header class="top-bar">
+          <button id="menu-toggle" class="menu-toggle"><i class="fas fa-bars"></i></button>
+          <div style="flex:1"></div>
+          <div class="header-actions">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="text-align: right;">
+                    <div id="user-name" style="font-weight: 600; color:white;">Cargando...</div>
+                    <div id="user-id" style="font-size: 0.8em; color: var(--text-muted);">...</div>
+                </div>
+                <div id="user-avatar" style="width: 32px; height: 32px; background: var(--bg-tertiary); border-radius: 50%; overflow:hidden;"></div>
+            </div>
+          </div>
+        </header>
+
+        <div class="content-wrapper" id="content">
       <div class="loading-spinner"></div>
     </div>
 
@@ -363,6 +397,11 @@
         </button>
       </div>
 
+        </div>
+      </main>
+    </div>
+
+    <script src="js/layout.js"></script>
     <script src="js/server.js"></script>
   </body>
 </html>
