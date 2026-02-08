@@ -720,47 +720,49 @@ async def perform_health_check():
 
 async def health_check_loop():
     """
-    Scheduled health check loop.
-    1. Runs at startup.
-    2. Runs at next :00.
-    3. Runs every LOOP_TIME minutes thereafter.
+    Scheduled health check strictly aligned to :00 and LOOP_TIME.
     """
-    # 1. Run immediately on startup (DISABLED)
+    from config import LOOP_TIME
+    
+    # 1. Startup check DISABLED (per user request: "a la siguiente hora exacta")
     # print("Performing startup health check...")
     # await perform_health_check()
     
-    # 2. Wait for next peak (:00)
+    # 2. Align to next hour (:00)
     now = datetime.utcnow()
-    next_peak = (now + timedelta(hours=1)).replace(minute=0, second=0, microsecond=0)
+    # Next hour start
+    next_check_time = (now + timedelta(hours=1)).replace(minute=0, second=0, microsecond=0)
     
-    delay_to_peak = (next_peak - now).total_seconds()
-    if delay_to_peak <= 0:
-         delay_to_peak = 10 # Should not happen, but safety net
-         
-    print(f"Next health check (Peak) in {delay_to_peak:.2f} seconds")
-    await asyncio.sleep(delay_to_peak)
+    delay_seconds = (next_check_time - now).total_seconds()
+    if delay_seconds < 0: delay_seconds = 0
     
-    # Run peak check
-    await perform_health_check()
-    
-    # 3. Loop every LOOP_TIME
+    print(f"Health Check aligned to next hour ({next_check_time.strftime('%H:%M:%S')}). Waiting {delay_seconds:.2f}s")
+    await asyncio.sleep(delay_seconds)
+
+    # 3. Strict Loop
     while True:
         try:
-            # Wait LOOP_TIME minutes
-            # LOOP_TIME is int (e.g. 30)
-            loop_seconds = LOOP_TIME * 60
-            print(f"Next health check (Loop) in {loop_seconds} seconds")
-            
-            await asyncio.sleep(loop_seconds)
-            
-            # Run scheduled check
+            # Perform check
             await perform_health_check()
-                
+            
+            # Calculate next target (strict interval from previous target)
+            next_check_time += timedelta(minutes=LOOP_TIME)
+            
+            now = datetime.utcnow()
+            delay_seconds = (next_check_time - now).total_seconds()
+            
+            if delay_seconds < 0:
+                print(f"Health Check running behind schedule by {abs(delay_seconds):.2f}s")
+                delay_seconds = 0 # Run immediately if behind
+            
+            print(f"Next Health Check at {next_check_time.strftime('%H:%M:%S')} (in {delay_seconds:.2f}s)")
+            await asyncio.sleep(delay_seconds)
+            
         except asyncio.CancelledError:
             break
         except Exception as e:
             print(f"Health Check Loop Error: {e}")
-            await asyncio.sleep(60)
+            await asyncio.sleep(60) # Prevent tight loop on error
 
 @app.on_event("startup")
 async def startup_event():
