@@ -74,7 +74,7 @@ async function fetchStats() {
 // Animated counter
 function animateCounter(id, target) {
     const element = document.getElementById(id);
-    const duration = 2000;
+    const duration = 1000;
     const start = 0;
     const increment = target / (duration / 16);
     let current = start;

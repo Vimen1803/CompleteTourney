@@ -51,6 +51,9 @@ async def on_ready():
     """
     print(f'Logged in as {bot.user} (ID: {bot.user.id})')
     print('------')
+    # Initialize Stats
+    await DBManager.init_bot_stats(1)
+
     log_channel = bot.get_channel(LOG_CHANNEL)
     if log_channel:
         guilds_data = []
@@ -74,6 +77,7 @@ async def on_guild_join(guild):
     Se ejecuta cuando el bot es añadido a un servidor.
     Se encarga de añadir el servidor a la base de datos y enviar un mensaje al canal de serverlogs.
     """
+    await DBManager.increment_servers()
     channel = bot.get_channel(SERVER_LOG_CHANNEL)
     if channel:
         embed = discord.Embed(
@@ -98,6 +102,7 @@ async def on_guild_remove(guild):
     Se ejecuta cuando el bot es eliminado de un servidor.
     Se encarga de eliminar el servidor de la base de datos y enviar un mensaje al canal de serverlogs.
     """
+    await DBManager.decrement_servers()
     channel = bot.get_channel(SERVER_LOG_CHANNEL)
     if channel:
         embed = discord.Embed(

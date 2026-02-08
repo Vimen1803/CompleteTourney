@@ -362,6 +362,7 @@ class Tourney(commands.Cog):
         }
         
         await DBManager.create_tournament(new_tourney)
+        await DBManager.increment_tournaments()
         
         await self.send_log(
             ctx.guild, new_tourney['id'],
@@ -408,6 +409,7 @@ class Tourney(commands.Cog):
         await DBManager.delete_teams_by_tournament(tourney_id)
         
         await DBManager.delete_tournament(tourney_id)
+        await DBManager.decrement_tournaments()
         
         await self.send_log(
             ctx.guild, tourney_id,

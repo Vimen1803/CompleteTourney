@@ -384,3 +384,84 @@ class DBManager:
             {"$set": update_data},
             upsert=True
         )
+
+    # ==========================
+    # BOT USE STATS
+    # ==========================
+    bot_use_collection = db['bot_use']
+
+    @staticmethod
+    async def init_bot_stats(server_count: int):
+        """
+        Initializes the bot stats if they don't exist.
+        Updates server count on startup to ensure accuracy.
+        """
+        # Check if doc exists
+        stats = await DBManager.bot_use_collection.find_one({"_id": "stats"})
+        if not stats:
+            await DBManager.bot_use_collection.insert_one({
+                "_id": "stats",
+                "serversOn": server_count,
+                "tournamentsDone": 0
+            })
+        else:
+            # On startup, we trust the bot's current guild count for active servers
+            await DBManager.bot_use_collection.update_one(
+                {"_id": "stats"},
+                {"$set": {"serversOn": server_count}}
+            )
+
+    @staticmethod
+    async def increment_servers():
+        """
+        Increments the serversOn counter.
+        """
+        await DBManager.bot_use_collection.update_one(
+            {"_id": "stats"},
+            {"$inc": {"serversOn": 1}},
+            upsert=True
+        )
+
+    @staticmethod
+    async def decrement_servers():
+        """
+        Decrements the serversOn counter.
+        """
+        await DBManager.bot_use_collection.update_one(
+            {"_id": "stats"},
+            {"$inc": {"serversOn": -1}},
+            upsert=True
+        )
+
+    @staticmethod
+    async def increment_tournaments():
+        """
+        Increments the tournamentsDone counter.
+        """
+        await DBManager.bot_use_collection.update_one(
+            {"_id": "stats"},
+            {"$inc": {"tournamentsDone": 1}},
+            upsert=True
+        )
+
+    @staticmethod
+    async def decrement_tournaments():
+        """
+        Decrements the tournamentsDone counter.
+        """
+        await DBManager.bot_use_collection.update_one(
+            {"_id": "stats"},
+            {"$inc": {"tournamentsDone": -1}},
+            upsert=True
+        )
+
+    @staticmethod
+    async def get_bot_stats():
+        """
+        Returns the bot stats (serversOn, tournamentsDone).
+        """
+        stats = await DBManager.bot_use_collection.find_one({"_id": "stats"})
+        if not stats:
+            return {"serversOn": 0, "tournamentsDone": 0}
+        return stats
+

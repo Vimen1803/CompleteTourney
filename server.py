@@ -679,8 +679,9 @@ async def get_stats():
     Returns global stats for the home page.
     """
     try:
-        guilds = await DBManager.get_total_guilds()
-        tournaments = await DBManager.get_total_tournaments()
+        stats = await DBManager.get_bot_stats()
+        guilds = stats.get("serversOn", 0)
+        tournaments = stats.get("tournamentsDone", 0)
         return JSONResponse({"guilds": guilds, "tournaments": tournaments})
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
@@ -840,6 +841,7 @@ async def create_tournament(guild_id: int, request: Request):
             print(f"Error fetching guild icon: {e}")
     
     await DBManager.create_tournament(new_tourney)
+    await DBManager.increment_tournaments()
     return JSONResponse(content={"status": "created", "id": tourney_id})
 
 @app.post("/api/guild/{guild_id}/tournament/{tournament_id}/update")
@@ -1030,6 +1032,7 @@ async def delete_tournament(guild_id: int, tournament_id: str, request: Request)
     if not user: return JSONResponse(status_code=401, content={"error": "Login required"})
 
     await DBManager.delete_tournament(tournament_id)
+    await DBManager.decrement_tournaments()
     await DBManager.delete_teams_by_tournament(tournament_id)
     return JSONResponse(content={"status": "deleted"})
     
