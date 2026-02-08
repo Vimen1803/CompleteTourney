@@ -41,12 +41,45 @@ async def serve_dashboard():
     return FileResponse("docLA/dashboard.html")
 
 @app.get("/server")
-async def serve_server():
-    return FileResponse("docLA/server.html")
+async def serve_server(guild_id: Optional[str] = None):
+    with open("docLA/server.html", "r", encoding="utf-8") as f:
+        content = f.read()
+    
+    if guild_id:
+        # Update URL for SEO/Sharing
+        target_url = f"https://tourneydoc.victormenjon.es/server?guild_id={guild_id}"
+        content = content.replace('content="https://tourneydoc.victormenjon.es/server"', f'content="{target_url}"')
+        
+    return HTMLResponse(content=content)
 
 @app.get("/tournament")
-async def serve_tournament():
-    return FileResponse("docLA/tournament.html")
+async def serve_tournament(id: Optional[str] = None):
+    with open("docLA/tournament.html", "r", encoding="utf-8") as f:
+        content = f.read()
+
+    if id:
+        # Attempt to fetch tournament details for better SEO
+        try:
+            t = await DBManager.get_tournament(id)
+            if t:
+                # Update Title
+                new_title = f"{t['name']} - Detalle del Torneo"
+                content = content.replace('content="Tourney Bot - Detalle del Torneo"', f'content="{new_title}"')
+
+                # Update Description
+                desc = t.get("description", "")
+                if desc:
+                    # Basic sanitization for meta tag
+                    desc = desc.replace('"', "'").replace('\n', ' ')[:150] + "..."
+                    content = content.replace('content="Visualiza brackets, equipos y resultados del torneo en tiempo real."', f'content="{desc}"')
+                
+                # Update URL
+                target_url = f"https://tourneydoc.victormenjon.es/tournament?id={id}"
+                content = content.replace('content="https://tourneydoc.victormenjon.es/tournament"', f'content="{target_url}"')
+        except Exception as e:
+            print(f"SSR Error tournament: {e}")
+
+    return HTMLResponse(content=content)
 
 # ==========================================
 # RUTAS DE AUTH
