@@ -32,6 +32,14 @@ except: pass
 async def serve_home():
     return FileResponse("docLA/index.html")
 
+@app.get("/sitemap.xml")
+async def serve_sitemap():
+    return FileResponse("docLA/sitemap.xml")
+
+@app.get("/robots.txt")
+async def serve_robots():
+    return FileResponse("docLA/robots.txt")
+
 @app.get("/docs")
 async def serve_docs():
     return FileResponse("docLA/doc.html")
