@@ -78,18 +78,25 @@ async function fetchHealth() {
             data.slice(0, 24).forEach(item => {
                 const itemOnline = item.status === 'online' && item.latency > 0;
                 const date = new Date(item.timestamp);
-                const timeStr = date.toLocaleTimeString('es-ES', { hour: '2-digit', minute:'2-digit' });
+                const day = String(date.getDate()).padStart(2, '0');
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const year = date.getFullYear();
+                const time = date.toLocaleTimeString('es-ES', { hour: '2-digit', minute:'2-digit' });
+                const timeStr = `${day}/${month}/${year} ${time}`;
                 
                 const row = document.createElement('div');
                 row.className = 'history-item';
                 row.innerHTML = `
-                    <div class="h-left">
+                    <div class="h-main">
                         <div class="h-dot ${itemOnline ? 'online' : ''}"></div>
-                        <span class="h-time">${timeStr}</span>
+                        <span class="h-latency ${itemOnline ? 'online' : ''}">
+                            ${itemOnline ? item.latency + ' ms' : 'Offline'}
+                        </span>
                     </div>
-                    <span class="h-latency ${itemOnline ? 'online' : ''}">
-                        ${itemOnline ? item.latency + ' ms' : '0 ms'}
-                    </span>
+                    <div class="h-footer">
+                        <span class="h-date">${time}</span>
+                        <span class="h-time-small">${day}/${month}/${year}</span>
+                    </div>
                 `;
                 historyContainer.appendChild(row);
             });
