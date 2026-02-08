@@ -74,8 +74,8 @@ async function fetchHealth() {
             const historyContainer = document.getElementById('history-container');
             historyContainer.innerHTML = '';
 
-            // Show up to 10 entries
-            data.slice(0, 10).forEach(item => {
+            // Show up to 24 entries
+            data.slice(0, 24).forEach(item => {
                 const itemOnline = item.status === 'online' && item.latency > 0;
                 const date = new Date(item.timestamp);
                 const timeStr = date.toLocaleTimeString('es-ES', { hour: '2-digit', minute:'2-digit' });

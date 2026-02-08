@@ -258,6 +258,8 @@ body {
     border-radius: 16px;
     overflow: hidden;
     backdrop-filter: blur(12px);
+    max-height: 600px;
+    overflow-y: auto;
 }
 
 .history-item {

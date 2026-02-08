@@ -644,7 +644,7 @@ async def health_check_api():
     Returns the latest health status from the DB.
     """
     # 1. Get History (last 24 records)
-    history = await DBManager.get_health_history(limit=50)
+    history = await DBManager.get_health_history(limit=24)
     
     if not history:
         return JSONResponse([])
