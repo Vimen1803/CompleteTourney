@@ -644,7 +644,6 @@ async def status_page(request: Request):
     """
     return FileResponse("docLA/health.html")
 
-from config import LOOP_TIME
 
 @app.get("/api/health")
 async def health_check_api():
@@ -722,15 +721,10 @@ async def perform_health_check():
 
 async def health_check_loop():
     """
-    Scheduled health check strictly aligned to :00 and LOOP_TIME.
+    Scheduled health check strictly aligned to :00.
     """
-    from config import LOOP_TIME
     
-    # 1. Startup check DISABLED (per user request: "a la siguiente hora exacta")
-    # print("Performing startup health check...")
-    # await perform_health_check()
-    
-    # 2. Align to next hour (:00)
+    # 1. Align to next hour (:00)
     now = datetime.utcnow()
     # Next hour start
     next_check_time = (now + timedelta(hours=1)).replace(minute=0, second=0, microsecond=0)
@@ -741,21 +735,23 @@ async def health_check_loop():
     print(f"Health Check aligned to next hour ({next_check_time.strftime('%H:%M:%S')}). Waiting {delay_seconds:.2f}s")
     await asyncio.sleep(delay_seconds)
 
-    # 3. Strict Loop
+    # 2. Strict Loop
     while True:
         try:
             # Perform check
             await perform_health_check()
             
-            # Calculate next target (strict interval from previous target)
-            next_check_time += timedelta(minutes=LOOP_TIME)
-            
+            # Calculate next target (always next hour :00)
             now = datetime.utcnow()
+            next_check_time = (now + timedelta(hours=1)).replace(minute=0, second=0, microsecond=0)
+            
             delay_seconds = (next_check_time - now).total_seconds()
             
             if delay_seconds < 0:
                 print(f"Health Check running behind schedule by {abs(delay_seconds):.2f}s")
-                delay_seconds = 0 # Run immediately if behind
+                # If significantly behind, correct to next hour from NOW
+                next_check_time = (now + timedelta(hours=1)).replace(minute=0, second=0, microsecond=0)
+                delay_seconds = (next_check_time - now).total_seconds()
             
             print(f"Next Health Check at {next_check_time.strftime('%H:%M:%S')} (in {delay_seconds:.2f}s)")
             await asyncio.sleep(delay_seconds)

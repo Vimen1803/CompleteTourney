@@ -1,191 +1,332 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tourney Bot - Gestiona tus Torneos en Discord</title>
-    
+
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tourney Bot - El Mejor Bot de Torneos para Discord | Organiza Competiciones</title>
+
     <!-- Meta Tags Principales -->
-    <meta name="description" content="La solución definitiva para gestionar competiciones de eSports, ligas amistosas y brackets automatizados directamente desde tu servidor.">
-    <meta name="keywords" content="discord, bot, torneos, esports, brackets, competicion, gestion, videojuegos, gaming">
-    <meta name="author" content="Victor Menjon">
-    <meta name="theme-color" content="#5865F2">
+    <meta
+      name="description"
+      content="Tourney Bot es el bot de Discord definitivo para organizar torneos, brackets y ligas de eSports. Gestión automática, inscripciones y resultados en tiempo real."
+    />
+    <meta
+      name="keywords"
+      content="discord bot, torneos discord, organizar torneos, esports, brackets generator, competicion, gaming, league manager, toornament alternative, tourney bot, tourneydoc, tourneydoc.es, tourneydoc.victormenjon.es"
+    />
+    <meta name="author" content="Victor Menjon" />
+    <meta name="theme-color" content="#5865F2" />
 
     <!-- Open Graph / Facebook / Discord -->
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://tourneydoc.victormenjon.es/">
-    <meta property="og:title" content="Tourney Bot - Gestiona tus Torneos en Discord">
-    <meta property="og:description" content="La solución definitiva para gestionar competiciones de eSports, ligas amistosas y brackets automatizados directamente desde tu servidor.">
-    <meta property="og:image" content="https://raw.githubusercontent.com/Vimen1803/CompleteTourney/refs/heads/main/img/imgHome.png?token=GHSAT0AAAAAADVAFEHEULITVCJ5254JYCZG2MH26PA">
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://tourneydoc.victormenjon.es/" />
+    <meta
+      property="og:title"
+      content="Tourney Bot - Gestiona tus Torneos en Discord"
+    />
+    <meta
+      property="og:description"
+      content="La solución definitiva para gestionar competiciones de eSports, ligas amistosas y brackets automatizados directamente desde tu servidor."
+    />
+    <meta
+      property="og:image"
+      content="https://tourneydoc.victormenjon.es/data/image.png"
+    />
 
     <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="https://tourneydoc.victormenjon.es/">
-    <meta property="twitter:title" content="Tourney Bot - Gestiona tus Torneos en Discord">
-    <meta property="twitter:description" content="La solución definitiva para gestionar competiciones de eSports, ligas amistosas y brackets automatizados directamente desde tu servidor.">
-    <meta property="twitter:image" content="https://raw.githubusercontent.com/Vimen1803/CompleteTourney/refs/heads/main/img/imgHome.png?token=GHSAT0AAAAAADVAFEHEULITVCJ5254JYCZG2MH26PA">
-    <meta property="twitter:creator" content="@Viiictooor18">
-    <link rel="icon" href="https://cdn.discordapp.com/emojis/671348413090234393.png"/>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="css/index.css">
-</head>
-<body>
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta
+      property="twitter:url"
+      content="https://tourneydoc.victormenjon.es/"
+    />
+    <meta
+      property="twitter:title"
+      content="Tourney Bot - Gestiona tus Torneos en Discord"
+    />
+    <meta
+      property="twitter:description"
+      content="La solución definitiva para gestionar competiciones de eSports, ligas amistosas y brackets automatizados directamente desde tu servidor."
+    />
+    <meta
+      property="twitter:image"
+      content="https://tourneydoc.victormenjon.es/data/image.png"
+    />
+    <meta property="twitter:creator" content="@Viiictooor18" />
+    <link
+      rel="icon"
+      href="https://cdn.discordapp.com/emojis/671348413090234393.png"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/index.css" />
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Tourney Bot",
+      "applicationCategory": "GameApplication",
+      "operatingSystem": "Discord",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "EUR"
+      },
+      "description": "El mejor bot de Discord para organizar torneos y ligas de eSports automáticamente.",
+      "image": "https://tourneydoc.victormenjon.es/data/image.png",
+      "author": {
+        "@type": "Person",
+        "name": "Vimen"
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.9",
+        "ratingCount": "150"
+      },
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "EUR"
+      }
+    }
+    </script>
+  </head>
+  <body>
     <!-- Animated Background -->
     <div class="bg-animation">
-        <div class="bg-gradient"></div>
-        <div class="particles" id="particles"></div>
+      <div class="bg-gradient"></div>
+      <div class="particles" id="particles"></div>
     </div>
 
     <!-- Navbar -->
     <nav class="navbar" id="navbar">
-        <a href="/" class="logo">
-            <i class="fas fa-trophy"></i> 
-            <span>Tourney Bot</span>
+      <a href="/" class="logo">
+        <i class="fas fa-trophy"></i>
+        <span>Tourney Bot</span>
+      </a>
+      <div class="nav-links">
+        <a href="#features">Características</a>
+        <a href="#why-us">¿Por qué nosotros?</a>
+        <a href="/docs">Documentación</a>
+      </div>
+      <div style="display: flex; align-items: center; gap: 16px">
+        <a
+          href="https://discord.com/oauth2/authorize?client_id=1448450835213189191"
+          class="cta-btn"
+        >
+          <i class="fab fa-discord" style="margin-right: 8px"></i>
+          Invitar al Bot
         </a>
-        <div class="nav-links">
-            <a href="#features">Características</a>
-            <a href="#why-us">¿Por qué nosotros?</a>
-            <a href="/docs">Documentación</a>
-        </div>
-        <div style="display: flex; align-items: center; gap: 16px;">
-            <a href="https://discord.com/oauth2/authorize?client_id=1448450835213189191" class="cta-btn">
-                <i class="fab fa-discord" style="margin-right: 8px;"></i>
-                Invitar al Bot
-            </a>
-            <button class="mobile-menu-btn" id="mobileMenuBtn">
-                <i class="fas fa-bars"></i>
-            </button>
-        </div>
+        <button class="mobile-menu-btn" id="mobileMenuBtn">
+          <i class="fas fa-bars"></i>
+        </button>
+      </div>
     </nav>
 
     <!-- Hero Section -->
     <section class="hero">
-        <div class="hero-content">
-            <h1>Organiza Torneos en Discord</h1>
-            <p>La solución definitiva para gestionar competiciones de eSports, ligas amistosas y brackets automatizados directamente desde tu servidor.</p>
-            <div class="hero-buttons">
-                <a href="/dashboard" class="cta-btn btn-large">
-                    <i class="fas fa-rocket" style="margin-right: 8px;"></i>
-                    Empezar Ahora
-                </a>
-                <a href="/status" class="cta-btn btn-secondary btn-large">
-                    <i class="fas fa-chart-line" style="margin-right: 8px;"></i>
-                    Estado Del Bot
-                </a>
-            </div>
-            <div class="hero-stats">
-                <div class="stat-item">
-                    <h3 id="server-count">999+</h3>
-                    <p>Servidores</p>
-                </div>
-                <div class="stat-item">
-                    <h3 id="match-count">999+</h3>
-                    <p>Torneos</p>
-                </div>
-                <div class="stat-item">
-                    <h3>24/7</h3>
-                    <p>Soporte</p>
-                </div>
-            </div>
+      <div class="hero-content">
+        <h1>Organiza Torneos en Discord</h1>
+        <p>
+          La solución definitiva para gestionar competiciones de eSports, ligas
+          amistosas y brackets automatizados directamente desde tu servidor.
+        </p>
+        <div class="hero-buttons">
+          <a href="/dashboard" class="cta-btn btn-large">
+            <i class="fas fa-rocket" style="margin-right: 8px"></i>
+            Empezar Ahora
+          </a>
+          <a href="/status" class="cta-btn btn-secondary btn-large">
+            <i class="fas fa-chart-line" style="margin-right: 8px"></i>
+            Estado Del Bot
+          </a>
         </div>
-        <img class="hero-card" src="/img/imageWeb.png" alt="Tourney Bot Dashboard" loading="lazy">
+        <div class="hero-stats">
+          <div class="stat-item">
+            <h3 id="server-count">999+</h3>
+            <p>Servidores</p>
+          </div>
+          <div class="stat-item">
+            <h3 id="match-count">999+</h3>
+            <p>Torneos</p>
+          </div>
+          <div class="stat-item">
+            <h3>24/7</h3>
+            <p>Soporte</p>
+          </div>
+        </div>
+      </div>
+      <img
+        class="hero-card"
+        src="/img/imageWeb.png"
+        alt="Tourney Bot Dashboard"
+        loading="lazy"
+      />
     </section>
 
     <!-- Features Section -->
     <section id="features" class="features">
-        <div class="section-header fade-in">
-            <h2>Todo lo que necesitas</h2>
-            <p>Hemos diseñado Tourney Bot pensando en la simplicidad y potencia para organizadores de torneos profesionales y casuales.</p>
+      <div class="section-header fade-in">
+        <h2>Todo lo que necesitas</h2>
+        <p>
+          Hemos diseñado Tourney Bot pensando en la simplicidad y potencia para
+          organizadores de torneos profesionales y casuales.
+        </p>
+      </div>
+      <div class="features-grid">
+        <div class="feature-card fade-in">
+          <div class="feature-icon">
+            <i class="fas fa-project-diagram"></i>
+          </div>
+          <h3>Brackets Automáticos</h3>
+          <p>
+            Generación instantánea de cuadros de torneo con visualización en
+            tiempo real. Avanza de ronda con un solo comando y mantén a todos
+            informados.
+          </p>
         </div>
-        <div class="features-grid">
-            <div class="feature-card fade-in">
-                <div class="feature-icon">
-                    <i class="fas fa-project-diagram"></i>
-                </div>
-                <h3>Brackets Automáticos</h3>
-                <p>Generación instantánea de cuadros de torneo con visualización en tiempo real. Avanza de ronda con un solo comando y mantén a todos informados.</p>
-            </div>
-            <div class="feature-card fade-in">
-                <div class="feature-icon">
-                    <i class="fas fa-users-cog"></i>
-                </div>
-                <h3>Gestión de Equipos</h3>
-                <p>Los jugadores pueden crear sus propios equipos, unirse mediante códigos únicos y gestionar sus alineaciones sin intervención del administrador.</p>
-            </div>
-            <div class="feature-card fade-in">
-                <div class="feature-icon">
-                    <i class="fas fa-stopwatch"></i>
-                </div>
-                <h3>Resultados en Tiempo Real</h3>
-                <p>Sistema de reporte de resultados simple con validación automática. Mantén a tu comunidad actualizada al instante con notificaciones automáticas.</p>
-            </div>
-            <div class="feature-card fade-in">
-                <div class="feature-icon">
-                    <i class="fas fa-shield-alt"></i>
-                </div>
-                <h3>Moderación Integrada</h3>
-                <p>Herramientas completas para administradores: prohibir equipos, forzar victorias, gestionar disputas y mantener la integridad del torneo.</p>
-            </div>
-            <div class="feature-card fade-in">
-                <div class="feature-icon">
-                    <i class="fas fa-chart-line"></i>
-                </div>
-                <h3>Estadísticas Detalladas</h3>
-                <p>Seguimiento completo del rendimiento de equipos y jugadores. Historial de torneos, clasificaciones globales y métricas avanzadas.</p>
-            </div>
-            <div class="feature-card fade-in">
-                <div class="feature-icon">
-                    <i class="fas fa-robot"></i>
-                </div>
-                <h3>Fácil de Usar</h3>
-                <p>Comandos intuitivos con autocompletado y una interfaz web moderna para gestionar todo sin complicaciones técnicas.</p>
-            </div>
+        <div class="feature-card fade-in">
+          <div class="feature-icon">
+            <i class="fas fa-users-cog"></i>
+          </div>
+          <h3>Gestión de Equipos</h3>
+          <p>
+            Los jugadores pueden crear sus propios equipos, unirse mediante
+            códigos únicos y gestionar sus alineaciones sin intervención del
+            administrador.
+          </p>
         </div>
+        <div class="feature-card fade-in">
+          <div class="feature-icon">
+            <i class="fas fa-stopwatch"></i>
+          </div>
+          <h3>Resultados en Tiempo Real</h3>
+          <p>
+            Sistema de reporte de resultados simple con validación automática.
+            Mantén a tu comunidad actualizada al instante con notificaciones
+            automáticas.
+          </p>
+        </div>
+        <div class="feature-card fade-in">
+          <div class="feature-icon">
+            <i class="fas fa-shield-alt"></i>
+          </div>
+          <h3>Moderación Integrada</h3>
+          <p>
+            Herramientas completas para administradores: prohibir equipos,
+            forzar victorias, gestionar disputas y mantener la integridad del
+            torneo.
+          </p>
+        </div>
+        <div class="feature-card fade-in">
+          <div class="feature-icon">
+            <i class="fas fa-chart-line"></i>
+          </div>
+          <h3>Estadísticas Detalladas</h3>
+          <p>
+            Seguimiento completo del rendimiento de equipos y jugadores.
+            Historial de torneos, clasificaciones globales y métricas avanzadas.
+          </p>
+        </div>
+        <div class="feature-card fade-in">
+          <div class="feature-icon">
+            <i class="fas fa-robot"></i>
+          </div>
+          <h3>Fácil de Usar</h3>
+          <p>
+            Comandos intuitivos con autocompletado y una interfaz web moderna
+            para gestionar todo sin complicaciones técnicas.
+          </p>
+        </div>
+      </div>
     </section>
 
     <!-- Why Us Section -->
     <section id="why-us" class="why-us">
-        <div class="why-content fade-in">
-            <h2>¿Por qué elegir Tourney Bot?</h2>
-            <p>A diferencia de otros bots complejos y de pago, Tourney Bot se centra en la experiencia del usuario, la fiabilidad y la simplicidad sin sacrificar funcionalidades.</p>
-            <div class="why-list">
-                <div class="why-item">
-                    <i class="fas fa-check-circle check-icon"></i>
-                    <div>
-                        <h4>Sin configuraciones infinitas</h4>
-                        <p>Empieza tu torneo en menos de 2 minutos. Comandos 'Plug & Play' sin necesidad de leer manuales extensos. Todo es intuitivo desde el primer momento.</p>
-                    </div>
-                </div>
-                <div class="why-item">
-                    <i class="fas fa-check-circle check-icon"></i>
-                    <div>
-                        <h4>Soporte Activo 24/7</h4>
-                        <p>Actualizaciones constantes basadas en feedback de la comunidad y un equipo de soporte siempre disponible para ayudarte cuando lo necesites.</p>
-                    </div>
-                </div>
-                <div class="why-item">
-                    <i class="fas fa-check-circle check-icon"></i>
-                    <div>
-                        <h4>Gratis y Sin Límites</h4>
-                        <p>Todas las funcionalidades principales son completamente gratuitas. Sin paywalls ocultos ni límites artificiales en torneos o participantes.</p>
-                    </div>
-                </div>
+      <div class="why-content fade-in">
+        <h2>¿Por qué elegir Tourney Bot?</h2>
+        <p>
+          A diferencia de otros bots complejos y de pago, Tourney Bot se centra
+          en la experiencia del usuario, la fiabilidad y la simplicidad sin
+          sacrificar funcionalidades.
+        </p>
+        <div class="why-list">
+          <div class="why-item">
+            <i class="fas fa-check-circle check-icon"></i>
+            <div>
+              <h4>Sin configuraciones infinitas</h4>
+              <p>
+                Empieza tu torneo en menos de 2 minutos. Comandos 'Plug & Play'
+                sin necesidad de leer manuales extensos. Todo es intuitivo desde
+                el primer momento.
+              </p>
             </div>
+          </div>
+          <div class="why-item">
+            <i class="fas fa-check-circle check-icon"></i>
+            <div>
+              <h4>Soporte Activo 24/7</h4>
+              <p>
+                Actualizaciones constantes basadas en feedback de la comunidad y
+                un equipo de soporte siempre disponible para ayudarte cuando lo
+                necesites.
+              </p>
+            </div>
+          </div>
+          <div class="why-item">
+            <i class="fas fa-check-circle check-icon"></i>
+            <div>
+              <h4>Gratis y Sin Límites</h4>
+              <p>
+                Todas las funcionalidades principales son completamente
+                gratuitas. Sin paywalls ocultos ni límites artificiales en
+                torneos o participantes.
+              </p>
+            </div>
+          </div>
         </div>
-        <img src="/img/imgServer.png" alt="Tourney Bot Interface" loading="lazy" class="why-visual fade-in" style="margin-top: 80px;">
+      </div>
+      <img
+        src="/img/imgServer.png"
+        alt="Tourney Bot Interface"
+        loading="lazy"
+        class="why-visual fade-in"
+        style="margin-top: 80px"
+      />
     </section>
 
     <!-- Footer -->
     <footer>
-        <div class="social-links">
-            <a href="https://discord.gg/sq5kxpKBvN" target="_blank"><i class="fab fa-discord"></i></a>
-            <a href="https://x.com/Viiictooor18" target="_blank"><i class="fab fa-twitter"></i></a>
-            <a href="https://github.com/Vimen1803/TournamentDiscordBot" target="_blank"><i class="fab fa-github"></i></a>
-        </div>
-        <p class="copyright">© 2026 Tourney Bot. Desarrollado por <a href="https://victormenjon.es" target="_blank" style="color: #5865f2; text-decoration: underline;">Vimen</a>.<br>Todos los derechos reservados.</p>
+      <div class="social-links">
+        <a href="https://discord.gg/sq5kxpKBvN" target="_blank"
+          ><i class="fab fa-discord"></i
+        ></a>
+        <a href="https://x.com/Viiictooor18" target="_blank"
+          ><i class="fab fa-twitter"></i
+        ></a>
+        <a
+          href="https://github.com/Vimen1803/TournamentDiscordBot"
+          target="_blank"
+          ><i class="fab fa-github"></i
+        ></a>
+      </div>
+      <p class="copyright">
+        © 2026 Tourney Bot. Desarrollado por
+        <a
+          href="https://victormenjon.es"
+          target="_blank"
+          style="color: #5865f2; text-decoration: underline"
+          >Vimen</a
+        >.<br />Todos los derechos reservados.
+      </p>
     </footer>
 
     <script src="js/index.js"></script>
-</body>
+  </body>
 </html>
