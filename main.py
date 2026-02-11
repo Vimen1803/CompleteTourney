@@ -78,6 +78,14 @@ async def on_guild_join(guild):
     Se encarga de añadir el servidor a la base de datos y enviar un mensaje al canal de serverlogs.
     """
     await DBManager.increment_servers()
+
+    # Initialize Guild Config (Invite + Default Prefix)
+    try:
+        await get_or_create_invite(guild)
+        await DBManager.update_guild_config_field(guild.id, 'prefix', PREFIX)
+    except Exception as e:
+        print(f"Error initializing guild config for {guild.name}: {e}")
+
     channel = bot.get_channel(SERVER_LOG_CHANNEL)
     if channel:
         embed = discord.Embed(
