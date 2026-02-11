@@ -398,6 +398,7 @@ async def get_guild_public(guild_id: int, request: Request):
         
         role_label = 'Miembro'
         can_manage = False
+        config = None
         
         # Only check permissions if user is logged in
         if user and token:
@@ -421,19 +422,28 @@ async def get_guild_public(guild_id: int, request: Request):
                 role_label = 'Admin'
                 can_manage = True
             else:
-                admin_roles = config.get("admin_roles", [])
-                if admin_roles and mem:
-                    curr_roles = mem.get('roles', [])
-                    if any(rid in admin_roles for rid in curr_roles):
-                        role_label = 'Organizador'
-                        can_manage = True
+                if not mem:
+                    role_label = 'Externo'
+                else:
+                    # Role check for Organizer
+                    admin_roles = config.get("admin_roles", [])
+                    if admin_roles:
+                        curr_roles = mem.get('roles', [])
+                        if any(rid in admin_roles for rid in curr_roles):
+                            role_label = 'Organizador'
+                            can_manage = True
         
         # Get config (always needed for tournament data)
-        config = await DBManager.get_or_create_guild_config(guild_id)
+        # config already fetched above if user logged in, but ensure it is fetched if not
+        if not config:
+             config = await DBManager.get_or_create_guild_config(guild_id)
+
         if config and '_id' in config: config['_id'] = str(config['_id'])
         # Only set tourney_logs_enabled from tourney_logs if the field doesn't exist
         if config and 'tourney_logs_enabled' not in config:
             config['tourney_logs_enabled'] = config.get('tourney_logs', False)
+            
+        invite_url = config.get('invite_url') if config else None
 
         # Get tournaments
         active_tourney = await DBManager.get_active_tournament(guild_id)
@@ -493,12 +503,23 @@ async def get_guild_public(guild_id: int, request: Request):
             # Ensure tourney_logs_enabled is properly set as boolean
             config_safe['tourney_logs_enabled'] = config.get('tourney_logs_enabled', False) == True
 
+        # Fetch Bot Member to get current nickname
+        # GET /guilds/{id}/members/@me might fail for bots, so we get ID first
+        bot_user = await asyncio.to_thread(DiscordAPI.get_user, "@me")
+        bot_nick = None
+        if bot_user:
+             bot_mem = await asyncio.to_thread(DiscordAPI.get_guild_member, str(guild_id), bot_user['id'])
+             if bot_mem:
+                 bot_nick = bot_mem.get('nick')
+
         return JSONResponse(content={
             "guild": {
                 "id": str(guild['id']),
                 "name": guild['name'],
                 "icon": icon_url,
-                "member_count": guild.get('approximate_member_count', 0)
+                "member_count": guild.get('approximate_member_count', 0),
+                "invite_url": invite_url,
+                "bot_nickname": bot_nick
             },
             "role_label": role_label,
             "can_manage": can_manage,
@@ -523,7 +544,9 @@ async def update_config(guild_id: int, request: Request):
     token = request.session.get("access_token")
     user_guilds = []
     if token:
-         user_guilds = await asyncio.to_thread(lambda: requests.get(f"{API_ENDPOINT}/users/@me/guilds", headers={"Authorization": f"Bearer {token}"}).json())
+         resp = await asyncio.to_thread(lambda: requests.get(f"{API_ENDPOINT}/users/@me/guilds", headers={"Authorization": f"Bearer {token}"}).json())
+         if isinstance(resp, list):
+             user_guilds = resp
     
     target = next((g for g in user_guilds if g['id'] == str(guild_id)), None)
     if not target: return JSONResponse(status_code=403, content={"error": "Forbidden"})
@@ -569,6 +592,13 @@ async def update_config(guild_id: int, request: Request):
                 
             await DBManager.update_guild_config_field(guild_id, target_field, val)
             
+    # Handle Bot Nickname Update
+    if "bot_nickname" in data:
+        new_nick = data["bot_nickname"]
+        # If empty, treat as reset (pass None to method? No, method takes str or None. If user sends empty string, we want to clear it)
+        if new_nick == "": new_nick = None
+        await asyncio.to_thread(DiscordAPI.modify_current_member, str(guild_id), new_nick)
+
     return JSONResponse(content={"status": "updated"})
 
 # ==========================================
@@ -924,6 +954,10 @@ async def get_tournament_details(guild_id: int, tournament_id: str, request: Req
 
     # Check Permissions only if logged in
     can_manage = False
+    role_label = 'Miembro'
+    config = None
+    mem = None
+    
     if user and token:
         try:
             user_guilds_oauth = []
@@ -939,14 +973,26 @@ async def get_tournament_details(guild_id: int, tournament_id: str, request: Req
                 
             mem = await asyncio.to_thread(DiscordAPI.get_guild_member, str(guild_id), user['id'])
             
-            if is_admin: can_manage = True
+            config = await DBManager.get_or_create_guild_config(guild_id)
+            
+            if is_admin:
+                role_label = 'Admin'
+                can_manage = True
             else:
-                config = await DBManager.get_or_create_guild_config(guild_id)
-                admin_roles = config.get("admin_roles", [])
-                if admin_roles and mem:
-                    if any(rid in admin_roles for rid in mem.get('roles', [])):
-                        can_manage = True
+                if not mem:
+                    role_label = 'Externo'
+                else:
+                    admin_roles = config.get("admin_roles", [])
+                    if admin_roles:
+                        if any(rid in admin_roles for rid in mem.get('roles', [])):
+                            role_label = 'Organizador'
+                            can_manage = True
         except: pass
+    # Ensure config is loaded if not already
+    if not config:
+        config = await DBManager.get_or_create_guild_config(guild_id)
+        
+    invite_url = config.get('invite_url') if config else None
 
     # Fetch details
     tourney = await DBManager.get_tournament(tournament_id)
@@ -1015,13 +1061,14 @@ async def get_tournament_details(guild_id: int, tournament_id: str, request: Req
     # Ensure guild_id is string for JS precision
     if 'guild_id' in tourney:
         tourney['guild_id'] = str(tourney['guild_id'])
-
     # Include is_logged_in flag for frontend
     return JSONResponse(content={
         "tournament": tourney, 
         "teams": cleaned_teams, 
         "can_manage": can_manage,
-        "is_logged_in": user is not None
+        "is_logged_in": bool(user),
+        "role_label": role_label,
+        "invite_url": invite_url
     })
 
 @app.post("/api/guild/{guild_id}/tournament/{tournament_id}/delete")

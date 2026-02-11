@@ -85,7 +85,11 @@ async function loadTournament(force = false) {
         const canManage = data.can_manage;
         const isLoggedIn = data.is_logged_in;
         
-        // Login Banner for guests
+        const roleLabel = data.role_label;
+        const inviteUrl = data.invite_url || "";
+        const hasInvite = inviteUrl && inviteUrl.trim() !== "" && inviteUrl !== "None";
+
+        // Login Banner for guests or Externo with Invite
         let loginBannerHtml = '';
         if (!isLoggedIn) {
             loginBannerHtml = `
@@ -96,7 +100,31 @@ async function loadTournament(force = false) {
                     </a>
                 </div>
             `;
+        } else if (roleLabel === "Externo") {
+             loginBannerHtml = `
+                <div style="background: linear-gradient(135deg, #5865f2 0%, #7289da 100%); padding: 20px; border-radius: 8px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
+                    <p style="color: white; margin: 0; font-weight: 500;"><i class="fas fa-info-circle"></i> ¡Únete al servidor para participar en los torneos!</p>
+                    ${hasInvite ? `<a href="${inviteUrl}" target="_blank" style="background: white; color: #5865f2; padding: 10px 20px; border-radius: 6px; font-weight: bold; display: flex; align-items: center; gap: 8px; text-decoration: none;"> <i class="fab fa-discord"></i> Unirse al Servidor </a>` : ''}
+                </div>
+            `;
         }
+        
+        let badgeClass = "member";
+        if (roleLabel === "Admin") badgeClass = "admin";
+        else if (roleLabel === "Organizador") badgeClass = "mod";
+        else if (roleLabel === "Externo") badgeClass = "external";
+        
+        // CSS for badge (inline or separate file? Assuming server.css covers some, but we need external style if not present)
+        // tournament.css doesn't seem to have specific badge styles, relying on global or inline.
+        // We will use inline styles for the badge color if needed or rely on server.css classes if imported (layout usually imports specific css).
+        // Check if server.css is imported in tournament page? tournament.html usually imports tournament.css.
+        // I'll add inline style mapping for simplicity or assume styles exist.
+        // Server.css introduced .badge.external. Tournament.css has .badge.
+        
+        let badgeStyle = "background: #5865f2;";
+        if (roleLabel === "Admin") badgeStyle = "background: #ed4245;";
+        else if (roleLabel === "Organizador") badgeStyle = "background: #e67e22;";
+        else if (roleLabel === "Externo") badgeStyle = "background: #747f8d;"; // Gray for external
         
         // Banner Logic
         let bannerStyle = `background-image: linear-gradient(to right, #5865f2, #ed4245);`;
@@ -132,7 +160,9 @@ async function loadTournament(force = false) {
         document.getElementById('content').innerHTML = `
             ${loginBannerHtml}
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <a href="/server?id=${guildId}" class="back-btn" style="text-decoration: none; margin-bottom: 0;"><i class="fas fa-arrow-left"></i> Volver a Servidor</a>
+                <div style="display:flex; align-items:center; gap:15px;">
+                    <a href="/server?id=${guildId}" class="back-btn" style="text-decoration: none; margin-bottom: 0;"><i class="fas fa-arrow-left"></i> Volver a Servidor</a>
+                </div>
                 
                 <div style="display: flex; gap: 20px;">
                     <span onclick="switchTournamentTab('general')" id="btn-general" class="${generalClass}">General</span>
@@ -183,7 +213,9 @@ async function loadTournament(force = false) {
                         <div class="section-card" style="height: auto; min-width:205%;">
                             <h2><i class="fas fa-users"></i> Equipos Registrados (${teams.length}/${t.max_teams})</h2>
                             <div class="team-list" style="margin-top:16px; overflow-y: visible; max-height: none;">
-                                ${teams.map(tm => {
+                                ${!isLoggedIn || roleLabel === "Externo" ? `<p style="color:var(--text-muted); margin:0; font-size:0.9em;">Debes unirte al servidor para ver los equipos.</p>` 
+                                : teams.length === 0 ? '<p style="color:var(--text-muted); margin:0; font-size:0.9em;">Aún no hay equipos registrados.</p>' 
+                                : teams.map(tm => {
                                     const membersHtml = (tm.resolved_members || []).map(m => `
                                         <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
                                             ${m.is_leader ? '<i class="fas fa-crown" style="color:#ffd700; font-size:0.8em;"></i>' : '<div style="width:14px;"></div>'} 
@@ -213,7 +245,6 @@ async function loadTournament(force = false) {
                                         ${deleteBtn}
                                     </div>
                                 `}).join('')}
-                                ${teams.length === 0 ? '<p style="color:var(--text-muted)">Aún no hay equipos registrados.</p>' : ''}
                             </div>
                         </div>
                     </div>
@@ -223,7 +254,6 @@ async function loadTournament(force = false) {
             <div id="tab-matchups" style="display: ${matchupsDisplay}; min-height: calc(100vh - 200px); width: 100%; align-items: center; justify-content: center; border-radius: 12px; ${bracketStyle}"></div>
         `;
     } catch(e) {
-        console.error(e);
         if (!tourneyData) {
             document.getElementById('content').innerHTML = "<h1>Error cargando torneo</h1><p>Es posible que no exista o no tengas permisos.</p>";
         }

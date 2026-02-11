@@ -232,6 +232,27 @@ a {
     background: #3ba55c;
     color: white;
 }
+.badge.external {
+    background: #747f8d;
+    color: white;
+}
+.btn-join {
+    background: #23a559;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 0.8em;
+    font-weight: bold;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.2s;
+}
+.btn-join:hover {
+    background: #1e8e4c;
+    color: white;
+}
 
 /* Login Banner */
 .login-banner {

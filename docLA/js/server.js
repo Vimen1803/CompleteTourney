@@ -58,17 +58,34 @@ try {
     guildCategories = data.categories || [];
     guildRoles = data.roles || [];
 
+    const inviteUrl = guild.invite_url || "#";
+    const hasInvite = inviteUrl && inviteUrl !== "#" && inviteUrl.trim() !== "";
+
     let loginBanner = "";
     if (!isLoggedIn) {
-    loginBanner = `
-                <div class="login-banner">
-                    <p><i class="fas fa-info-circle"></i> Inicia sesión con Discord para ver más detalles y gestionar el servidor</p>
-                    <a href="/login?redirect=/server?id=${currentGuildId}" class="login-btn">
-                        <i class="fab fa-discord"></i> Iniciar Sesión
-                    </a>
-                </div>
-            `;
+        loginBanner = `
+            <div class="login-banner">
+                <p><i class="fas fa-info-circle"></i> Inicia sesión con Discord para ver más detalles y gestionar el servidor</p>
+                <a href="/login?redirect=/server?id=${currentGuildId}" class="login-btn">
+                    <i class="fab fa-discord"></i> Iniciar Sesión
+                </a>
+            </div>
+        `;
+    } else if (roleLabel === "Externo" && hasInvite) {
+        loginBanner = `
+            <div class="login-banner">
+                <p><i class="fas fa-info-circle"></i> ¡Únete al servidor para participar en los torneos!</p>
+                <a href="${inviteUrl}" target="_blank" class="login-btn">
+                    <i class="fab fa-discord"></i> Unirse al Servidor
+                </a>
+            </div>
+        `;
     }
+
+    let badgeClass = "member";
+    if (roleLabel === "Admin") badgeClass = "admin";
+    else if (roleLabel === "Organizador") badgeClass = "mod";
+    else if (roleLabel === "Externo") badgeClass = "external";
 
     // Build header
     let headerHtml = `
@@ -77,7 +94,12 @@ try {
                     <a href="/dashboard" class="back-btn" style="margin-bottom: 0; text-decoration: none;"><i class="fas fa-arrow-left"></i> Volver al Dashboard</a>
                     <img src="${guild.icon || "https://cdn.discordapp.com/embed/avatars/0.png"}" style="width:48px; height:48px; border-radius:50%;">
                     <h1>${guild.name}</h1>
-                    ${isLoggedIn ? `<span class="badge ${roleLabel === "Admin" ? "admin" : roleLabel === "Organizador" ? "mod" : "member"}">${roleLabel}</span>` : ""}
+                    ${isLoggedIn ? `
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <span class="badge ${badgeClass}">${roleLabel}</span>
+                            ${roleLabel === "Externo" && hasInvite ? `<a href="${inviteUrl}" target="_blank" class="btn-join"><i class="fas fa-plus"></i> Unirse</a>` : ""}
+                        </div>
+                    ` : ""}
                 </div>
             </div>
         `;
@@ -397,6 +419,14 @@ return `
                         </div>
                         <div class="form-group" style="margin-bottom: 0;">
                             <label class="form-label" style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+                                <i class="fas fa-id-badge" style="color: var(--text-muted); font-size: 12px;"></i> Apodo del Bot
+                            </label>
+                            <input type="text" id="cfg-bot-nick" class="form-input" placeholder="Nombre en servidor" value="${data.guild.bot_nickname || ''}">
+                        </div>
+                    </div>
+                    <div style="margin-top: 20px;">
+                         <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label" style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
                                 <i class="fas fa-shield-alt" style="color: var(--text-muted); font-size: 12px;"></i> Canal Admin Bot
                             </label>
                             <select id="cfg-bot-admin" class="form-select"><option>Cargando...</option></select>
@@ -463,7 +493,7 @@ return `
                         <div style="width: 32px; height: 32px; background: rgba(237, 66, 69, 0.15); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
                             <i class="fas fa-user-shield" style="color: #ed4245; font-size: 14px;"></i>
                         </div>
-                        <h3 style="margin: 0; font-size: 1.1rem; color: var(--text-header);">Roles de Administración</h3>
+                        <h3 style="margin: 0; font-size: 1.1rem; color: var(--text-header);">Roles de Administración De Eventos</h3>
                     </div>
                     <div id="admin-roles-display" style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; min-height: 36px; align-items: center;"></div>
                     <div id="admin-roles-editor" style="display: none;">
@@ -1025,20 +1055,16 @@ e.preventDefault();
 
 const rolesStr = document.getElementById("cfg-roles").value;
 const roles = rolesStr
-    .split(",")
-    .map((s) => s.trim())
-    .filter((s) => s);
-
 const payload = {
-    prefix: document.getElementById("cfg-prefix").value,
-    category_id: document.getElementById("cfg-category").value,
-    bracket_channel_id: document.getElementById("cfg-bracket").value,
-    lobby_channel_id: document.getElementById("cfg-lobby").value,
-    bot_admin_channel_id: document.getElementById("cfg-bot-admin").value,
-    tourney_log_channel_id: document.getElementById("cfg-logs").value,
-    tourney_logs_enabled:
-    document.getElementById("cfg-logs-enabled").checked,
-    admin_roles: roles,
+    category_id: document.getElementById('cfg-category').value,
+    bracket_channel_id: document.getElementById('cfg-bracket').value,
+    lobby_channel_id: document.getElementById('cfg-lobby').value,
+    bot_admin_channel_id: document.getElementById('cfg-bot-admin').value,
+    prefix: document.getElementById('cfg-prefix').value,
+    tourney_log_channel_id: document.getElementById('cfg-logs').value,
+    tourney_logs_enabled: document.getElementById('cfg-logs-enabled').checked,
+    admin_roles: document.getElementById('cfg-roles') ? document.getElementById('cfg-roles').value.split(',').map(r => r.trim()).filter(r => r) : undefined,
+    bot_nickname: document.getElementById('cfg-bot-nick').value
 };
 
 try {

@@ -96,3 +96,21 @@ class DiscordAPI:
         """
         if not avatar_hash: return "https://cdn.discordapp.com/embed/avatars/0.png"
         return f"https://cdn.discordapp.com/avatars/{user_id}/{avatar_hash}.png"
+
+    @staticmethod
+    def modify_current_member(guild_id: str, nick: str = None) -> bool:
+        """
+        Modifica el apodo del bot en un servidor
+        """
+        if not BOT_TOKEN: return False
+        url = f"{API_ENDPOINT}/guilds/{guild_id}/members/@me"
+        
+        # If nick is empty string, set it to None to reset or send empty
+        # Discord API: "Requires the CHANGE_NICKNAME permission."
+        payload = {}
+        if nick is not None:
+             payload["nick"] = nick
+             
+        res = requests.patch(url, json=payload, headers=DiscordAPI.get_headers())
+        return res.status_code == 200
+

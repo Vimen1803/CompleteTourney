@@ -6,8 +6,8 @@ load_dotenv()
 #DISCORD
 DISCORD_CLIENT_ID: str = os.getenv("DISCORD_CLIENT_ID")
 DISCORD_CLIENT_SECRET: str = os.getenv("DISCORD_CLIENT_SECRET")
-REDIRECT_URI: str = os.getenv("REDIRECT_URI")
-#REDIRECT_URI: str = "http://localhost:8080/callback"
+#REDIRECT_URI: str = os.getenv("REDIRECT_URI")
+REDIRECT_URI: str = "http://localhost:8080/callback"
 SESSION_SECRET: str = os.getenv("SESSION_SECRET")
 API_ENDPOINT: str = os.getenv("API_ENDPOINT")
 
