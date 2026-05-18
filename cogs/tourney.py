@@ -1,4 +1,4 @@
-﻿import discord
+import discord
 from discord.ext import commands
 import uuid
 import datetime
@@ -699,6 +699,16 @@ class Tourney(commands.Cog):
                     guild.me: discord.PermissionOverwrite(read_messages=True)
                 }
                 
+                # Dar acceso a los roles de admin configurados en la DB
+                admin_role_ids = config.get('admin_roles', [])
+                for role_id_str in admin_role_ids:
+                    try:
+                        role = guild.get_role(int(role_id_str))
+                        if role:
+                            overwrites[role] = discord.PermissionOverwrite(read_messages=True, send_messages=True)
+                    except (ValueError, TypeError):
+                        pass
+
                 match_members = t1['members'] + t2['members']
                 for uid in match_members:
                     member = guild.get_member(uid)
