@@ -286,9 +286,8 @@ body::after {
 /* Hero image — clean, no rotating overlay */
 .hero-card {
     flex: 1;
-    min-width: 0;
     width: 100%;
-    max-width: 700px;
+    max-width: 1050px;
     align-self: center;
     object-fit: contain;
     border-radius: 8px;
