@@ -568,6 +568,7 @@ footer {
     height: 36px;
     border: 1px solid var(--border);
     border-radius: 4px;
+    text-decoration: none;
 }
 
 .social-links a:hover {
