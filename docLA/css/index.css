@@ -152,7 +152,7 @@ body::after {
 /* ─── HERO ────────────────────────────────────── */
 
 .hero {
-    padding: 170px 0 100px 8%;
+    padding: 170px 8% 100px;
     display: flex;
     align-items: center;
     gap: 60px;
@@ -288,18 +288,16 @@ body::after {
     flex: 1;
     min-width: 0;
     width: 100%;
-    max-width: none;
-    align-self: stretch;
-    object-fit: cover;
-    object-position: left center;
-    border-radius: 8px 0 0 8px;
+    max-width: 700px;
+    align-self: center;
+    object-fit: contain;
+    border-radius: 8px;
     border: 1px solid var(--border);
-    border-right: none;
-    box-shadow: -24px 0 80px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 32px 80px rgba(0, 0, 0, 0.5);
     display: block;
     background: none;
     backdrop-filter: none;
-    min-height: 520px;
+    height: auto;
     animation: heroIn 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.18s both;
 }
 
@@ -526,16 +524,16 @@ body::after {
     flex: 1;
     min-width: 0;
     width: 100%;
-    max-width: none;
+    max-width: 700px;
     border-radius: 6px;
     border: 1px solid var(--border);
     box-shadow: 0 24px 70px rgba(0, 0, 0, 0.5);
     display: block;
     background: transparent;
     backdrop-filter: none;
-    object-fit: cover;
-    align-self: stretch;
-    min-height: 420px;
+    object-fit: contain;
+    align-self: center;
+    height: auto;
     margin-top: 0 !important;
 }
 
@@ -635,9 +633,7 @@ footer {
         max-width: none;
         border-radius: 6px;
         border: 1px solid var(--border);
-        border-right: 1px solid var(--border);
         align-self: auto;
-        min-height: 260px;
     }
 
     .section-header {
