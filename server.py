@@ -1141,6 +1141,8 @@ async def get_blacklist_api(guild_id: int, request: Request):
         mem = await asyncio.to_thread(DiscordAPI.get_guild_member, str(guild_id), entry['user_id'])
         name = mem.get('user', {}).get('global_name') or mem.get('user', {}).get('username') if mem else f"Unknown ({entry['user_id']})"
         entry['user_name'] = name
+        if '_id' in entry:
+            entry['_id'] = str(entry['_id'])
         resolved_bl.append(entry)
         
     return JSONResponse(content={"blacklist": resolved_bl})
