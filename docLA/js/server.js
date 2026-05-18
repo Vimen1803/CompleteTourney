@@ -111,6 +111,7 @@ try {
             <div class="tabs">
                 <button class="tab-btn ${activeTab === 'overview' ? 'active' : ''}" onclick="switchTab('overview')">Resumen</button>
                 <button class="tab-btn ${activeTab === 'tournaments' ? 'active' : ''}" onclick="switchTab('tournaments')">Torneos</button>
+                ${canManage ? `<button class="tab-btn ${activeTab === 'blacklist' ? 'active' : ''}" onclick="switchTab('blacklist')">Blacklist</button>` : ""}
                 ${canManage ? `<button class="tab-btn ${activeTab === 'settings' ? 'active' : ''}" onclick="switchTab('settings')">Configuración</button>` : ""}
             </div>
         `;
@@ -123,8 +124,10 @@ try {
 
     // Settings Tab Content (only if can manage)
     let settingsHTML = "";
+    let blacklistHTML = "";
     if (canManage) {
-    settingsHTML = buildSettingsContent(data, roleLabel);
+        settingsHTML = buildSettingsContent(data, roleLabel);
+        blacklistHTML = `<div id="blacklist-container">Cargando blacklist...</div>`;
     }
 
     document.getElementById("content").innerHTML = `
@@ -133,8 +136,13 @@ try {
             ${tabsHtml}
             <div id="tab-overview" class="tab-content ${activeTab === 'overview' ? 'active' : ''}">${overviewHTML}</div>
             <div id="tab-tournaments" class="tab-content ${activeTab === 'tournaments' ? 'active' : ''}">${tournamentsHTML}</div>
+            ${canManage ? `<div id="tab-blacklist" class="tab-content ${activeTab === 'blacklist' ? 'active' : ''}">${blacklistHTML}</div>` : ""}
             ${canManage ? `<div id="tab-settings" class="tab-content ${activeTab === 'settings' ? 'active' : ''}">${settingsHTML}</div>` : ""}
         `;
+
+    if (canManage && activeTab === 'blacklist') {
+        loadBlacklist();
+    }
 
     // Fill selects if logged in and can manage
     if (canManage) {
@@ -586,6 +594,10 @@ document
     .querySelectorAll(".tab-btn")
     .forEach((el) => el.classList.remove("active"));
 document.getElementById(`tab-${tabId}`).classList.add("active");
+
+if (tabId === 'blacklist') {
+    loadBlacklist();
+}
 
 // Ensure the button gets active class even if triggered programmatically
 if (event && event.currentTarget) {
@@ -1078,6 +1090,103 @@ try {
 } catch (err) {
     alert("Error de conexión");
 }
+}
+
+async function loadBlacklist() {
+    const container = document.getElementById("blacklist-container");
+    if(!container) return;
+    
+    try {
+        const res = await fetch(`/api/guild/${currentGuildId}/blacklist`);
+        if(!res.ok) throw new Error("Error cargando blacklist");
+        const data = await res.json();
+        
+        let html = `
+            <div class="dashboard-card">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                    <h2 style="margin:0;"><i class="fas fa-ban" style="color:var(--danger);"></i> Blacklist de Jugadores</h2>
+                    <button onclick="showAddBlacklistModal()" class="btn-modern primary"><i class="fas fa-plus"></i> Añadir Jugador</button>
+                </div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Usuario</th>
+                                <th>Motivo</th>
+                                <th>Fecha</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+        `;
+        
+        if(!data.blacklist || data.blacklist.length === 0) {
+            html += `<tr><td colspan="4" style="text-align:center; padding:20px; color:var(--text-muted);">No hay jugadores en la blacklist.</td></tr>`;
+        } else {
+            data.blacklist.forEach(b => {
+                html += `
+                    <tr>
+                        <td><strong>${b.user_name}</strong> <br><small style="color:var(--text-muted);">${b.user_id}</small></td>
+                        <td>${b.reason}</td>
+                        <td>${b.date}</td>
+                        <td>
+                            <button onclick="removeBlacklistUser('${b.user_id}')" style="background:#ed4245; color:white; border:none; padding:6px 12px; border-radius:4px; cursor:pointer;"><i class="fas fa-trash"></i> Eliminar</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+        
+        html += `</tbody></table></div></div>`;
+        container.innerHTML = html;
+        
+    } catch(e) {
+        container.innerHTML = `<p style="color:#ed4245;">Error al cargar la blacklist.</p>`;
+    }
+}
+
+async function showAddBlacklistModal() {
+    const userId = prompt("Introduce la ID del usuario de Discord:");
+    if(!userId || userId.trim() === "") return;
+    
+    const reason = prompt("Introduce el motivo (opcional):");
+    
+    try {
+        const res = await fetch(`/api/guild/${currentGuildId}/blacklist/add`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ user_id: userId.trim(), reason: reason || "Sin especificar" })
+        });
+        
+        if(res.ok) {
+            loadBlacklist();
+        } else {
+            const data = await res.json();
+            alert("Error: " + data.error);
+        }
+    } catch(e) {
+        alert("Error de conexión");
+    }
+}
+
+async function removeBlacklistUser(userId) {
+    if(!confirm("¿Estás seguro de quitar a este jugador de la blacklist?")) return;
+    
+    try {
+        const res = await fetch(`/api/guild/${currentGuildId}/blacklist/remove`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ user_id: userId })
+        });
+        
+        if(res.ok) {
+            loadBlacklist();
+        } else {
+            alert("Error al eliminar");
+        }
+    } catch(e) {
+        alert("Error de conexión");
+    }
 }
 
 init();

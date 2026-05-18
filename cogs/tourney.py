@@ -1131,6 +1131,60 @@ class Tourney(commands.Cog):
         else:
             await ctx.send(embed=self.get_embed("Error", "Ese rol no estaba en la lista.", author=ctx.author))
 
+    @tourney.group(name="blacklist", aliases=["bl"])
+    async def blacklist_group(self, ctx):
+        """
+        Gestiona la blacklist de jugadores del torneo
+        """
+        if ctx.invoked_subcommand is None:
+            await self.show_blacklist(ctx)
+
+    async def show_blacklist(self, ctx):
+        if not await self.admin_check(ctx): return
+        
+        bl_users = await DBManager.get_blacklist(ctx.guild.id)
+        if not bl_users:
+            await ctx.send(embed=self.get_embed("Blacklist", "La blacklist está vacía.", author=ctx.author))
+            return
+            
+        desc = ""
+        for idx, u in enumerate(bl_users):
+            desc += f"**{idx+1}.** <@{u['user_id']}> - {u['reason']}\n"
+            
+        await ctx.send(embed=self.get_embed("Jugadores en Blacklist", desc, discord.Color.orange(), author=ctx.author))
+
+    @blacklist_group.command(name="add")
+    async def blacklist_add(self, ctx, member: discord.Member, *, reason: str = "Sin especificar"):
+        """
+        Añade un usuario a la blacklist
+        """
+        if not await self.admin_check(ctx): return
+        
+        if member.id == ctx.author.id:
+            await ctx.send(embed=self.get_embed("Error", "No puedes meterte a ti mismo en la blacklist.", discord.Color.red(), author=ctx.author))
+            return
+            
+        import datetime
+        date_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+        
+        await DBManager.add_to_blacklist(ctx.guild.id, member.id, reason, ctx.author.id, date_str)
+        await ctx.send(embed=self.get_embed("Blacklist Actualizada", f"Se ha añadido a {member.mention} a la blacklist.\n**Motivo:** {reason}", discord.Color.green(), author=ctx.author))
+
+    @blacklist_group.command(name="remove")
+    async def blacklist_remove(self, ctx, member: discord.Member):
+        """
+        Elimina un usuario de la blacklist
+        """
+        if not await self.admin_check(ctx): return
+        
+        entry = await DBManager.get_blacklisted_user(ctx.guild.id, member.id)
+        if not entry:
+            await ctx.send(embed=self.get_embed("Error", "Este usuario no está en la blacklist.", discord.Color.red(), author=ctx.author))
+            return
+            
+        await DBManager.remove_from_blacklist(ctx.guild.id, member.id)
+        await ctx.send(embed=self.get_embed("Blacklist Actualizada", f"Se ha eliminado a {member.mention} de la blacklist.", discord.Color.green(), author=ctx.author))
+
     @tourney.command(name="info")
     async def tourney_info(self, ctx, tourney_id: str = None):
         """
@@ -1281,6 +1335,11 @@ class Tourney(commands.Cog):
         all_members = list(set([ctx.author] + list(members)))
         
         for member in all_members:
+            bl_entry = await DBManager.get_blacklisted_user(ctx.guild.id, member.id)
+            if bl_entry:
+                await ctx.send(embed=self.get_embed("Blacklist", f"El usuario {member.mention} está en la blacklist y no puede participar.\n**Motivo:** {bl_entry.get('reason', 'Sin especificar')}", discord.Color.red(), author=ctx.author))
+                return
+                
             existing_team = await DBManager.get_team_by_member(member.id, active_tourney['id'])
             if existing_team:
                 await ctx.send(embed=self.get_embed("Error", f"El usuario {member.mention} ya pertenece al equipo **{existing_team['name']}**.\nNo puede unirse a otro equipo.", discord.Color.red()))
@@ -1426,6 +1485,11 @@ class Tourney(commands.Cog):
         max_m = active_tourney.get('max_members', 5)
         if len(team['members']) >= max_m:
             await ctx.send(embed=self.get_embed("Error", f"El equipo ya tiene el máximo de miembros permitidos ({max_m}).", discord.Color.red(), author=ctx.author))
+            return
+            
+        bl_entry = await DBManager.get_blacklisted_user(ctx.guild.id, user.id)
+        if bl_entry:
+            await ctx.send(embed=self.get_embed("Blacklist", f"El usuario {user.mention} está en la blacklist y no puede participar.\n**Motivo:** {bl_entry.get('reason', 'Sin especificar')}", discord.Color.red(), author=ctx.author))
             return
              
         existing_team = await DBManager.get_team_by_member(user.id, team['tournament_id'])

@@ -134,6 +134,28 @@
       "usage": ",tourney set winner [@miembro]"
     },
     {
+      "name": "tourney blacklist",
+      "desc": "Gestiona la blacklist de jugadores.",
+      "usage": ",tourney blacklist [add/remove] <@usuario> [motivo]",
+      "subcommands": [
+        {
+          "name": "add",
+          "desc": "Añade un jugador a la blacklist.",
+          "usage": ",tourney blacklist add <@usuario> [motivo]"
+        },
+        {
+          "name": "remove",
+          "desc": "Elimina un jugador de la blacklist.",
+          "usage": ",tourney blacklist remove <@usuario>"
+        },
+        {
+          "name": "",
+          "desc": "Muestra los jugadores en la blacklist.",
+          "usage": ",tourney blacklist"
+        }
+      ]
+    },
+    {
       "name": "tourney settings",
       "desc": "Muestra la configuración actual del servidor.",
       "usage": ",tourney settings"

@@ -15,6 +15,7 @@ suggestions_collection = db['sugerencias']
 health_collection = db['health_checks']
 heartbeat_collection = db['heartbeat'] # New collection for bot liveness
 users_collection = db['users'] # Collection for website users
+blacklist_collection = db['blacklist'] # Collection for blacklisted users
 
 @dataclass
 class HealthCheck:
@@ -465,3 +466,44 @@ class DBManager:
             return {"serversOn": 0, "tournamentsDone": 0}
         return stats
 
+    # --- Blacklist ---
+
+    @staticmethod
+    async def add_to_blacklist(guild_id: int, user_id: int, reason: str, added_by: int, date: str):
+        """
+        Adds a user to the blacklist
+        """
+        data = {
+            "guild_id": guild_id,
+            "user_id": user_id,
+            "reason": reason,
+            "added_by": added_by,
+            "date": date
+        }
+        await blacklist_collection.update_one(
+            {"guild_id": guild_id, "user_id": user_id},
+            {"$set": data},
+            upsert=True
+        )
+
+    @staticmethod
+    async def remove_from_blacklist(guild_id: int, user_id: int):
+        """
+        Removes a user from the blacklist
+        """
+        await blacklist_collection.delete_one({"guild_id": guild_id, "user_id": user_id})
+
+    @staticmethod
+    async def get_blacklisted_user(guild_id: int, user_id: int):
+        """
+        Gets a single blacklisted user
+        """
+        return await blacklist_collection.find_one({"guild_id": guild_id, "user_id": user_id})
+
+    @staticmethod
+    async def get_blacklist(guild_id: int):
+        """
+        Gets all blacklisted users for a guild
+        """
+        cursor = blacklist_collection.find({"guild_id": guild_id})
+        return await cursor.to_list(length=None)
