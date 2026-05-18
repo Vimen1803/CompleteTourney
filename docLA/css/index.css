@@ -152,18 +152,18 @@ body::after {
 /* ─── HERO ────────────────────────────────────── */
 
 .hero {
-    padding: 170px 8% 120px;
+    padding: 170px 0 100px 8%;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 80px;
+    gap: 60px;
     min-height: 100vh;
     position: relative;
     z-index: 1;
+    overflow: hidden;
 }
 
 .hero-content {
-    max-width: 560px;
+    flex: 0 0 480px;
     animation: none;
 }
 
@@ -286,17 +286,20 @@ body::after {
 /* Hero image — clean, no rotating overlay */
 .hero-card {
     flex: 1;
-    max-width: 560px;
-    border-radius: 6px;
-    border: 1px solid var(--border);
-    box-shadow: 0 32px 80px rgba(0, 0, 0, 0.55);
-    display: block;
+    min-width: 0;
+    width: 100%;
+    max-width: none;
+    align-self: stretch;
     object-fit: cover;
-    margin-left: 0;
-    /* Kill old styles */
+    object-position: left center;
+    border-radius: 8px 0 0 8px;
+    border: 1px solid var(--border);
+    border-right: none;
+    box-shadow: -24px 0 80px rgba(0, 0, 0, 0.4);
+    display: block;
     background: none;
     backdrop-filter: none;
-    min-height: unset;
+    min-height: 520px;
     animation: heroIn 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.18s both;
 }
 
@@ -521,15 +524,18 @@ body::after {
 /* Why-us image */
 .why-visual {
     flex: 1;
-    max-width: 480px;
+    min-width: 0;
+    width: 100%;
+    max-width: none;
     border-radius: 6px;
     border: 1px solid var(--border);
     box-shadow: 0 24px 70px rgba(0, 0, 0, 0.5);
     display: block;
     background: transparent;
     backdrop-filter: none;
-    min-height: unset;
     object-fit: cover;
+    align-self: stretch;
+    min-height: 420px;
     margin-top: 0 !important;
 }
 
@@ -568,7 +574,6 @@ footer {
     height: 36px;
     border: 1px solid var(--border);
     border-radius: 4px;
-    text-decoration: none;
 }
 
 .social-links a:hover {
@@ -617,15 +622,22 @@ footer {
 
     .hero {
         flex-direction: column;
-        padding-top: 140px;
-        gap: 60px;
+        padding: 140px 6% 80px;
+        gap: 48px;
+        overflow: visible;
     }
+
+    .hero-content { flex: none; width: 100%; }
 
     .hero h1 { font-size: 4rem; }
     .hero-card {
-        max-width: 100%;
         width: 100%;
-        margin-left: 0;
+        max-width: none;
+        border-radius: 6px;
+        border: 1px solid var(--border);
+        border-right: 1px solid var(--border);
+        align-self: auto;
+        min-height: 260px;
     }
 
     .section-header {
