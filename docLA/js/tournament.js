@@ -151,7 +151,7 @@ async function loadTournament(force = false) {
         
         const bracketStyle = t.last_bracket_url 
             ? `background-image: url('${t.last_bracket_url}'); background-repeat: no-repeat; background-position: center; background-size: contain;` 
-            : `background-image: url('/data/image.png'); background-repeat: repeat; background-position: center; background-size: 100px;`;
+            : `background: var(--bg-secondary);`;
 
         const winnerHtml = t.winner_name ? 
             `<div style="padding: 4px 10px; border-radius: 4px; font-size: 0.8em; font-weight: bold; text-transform: uppercase; background:#ffd700; color:black; display:flex; align-items:center; gap:6px; box-shadow:0 2px 4px rgba(0,0,0,0.5);">
