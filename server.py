@@ -1,3 +1,4 @@
+from cogs.tourney import DOC_URL
 from fastapi import FastAPI, Request, HTTPException, Depends
 from fastapi.responses import RedirectResponse, JSONResponse, FileResponse, HTMLResponse
 from fastapi.encoders import jsonable_encoder
@@ -55,8 +56,8 @@ async def serve_server(guild_id: Optional[str] = None):
     
     if guild_id:
         # Update URL for SEO/Sharing
-        target_url = f"https://tourneydoc.victormenjon.es/server?guild_id={guild_id}"
-        content = content.replace('content="https://tourneydoc.victormenjon.es/server"', f'content="{target_url}"')
+        target_url = f"{DOC_URL}/server?guild_id={guild_id}"
+        content = content.replace(f'content="{DOC_URL}/server"', f'content="{target_url}"')
         
     return HTMLResponse(content=content)
 
@@ -82,8 +83,8 @@ async def serve_tournament(id: Optional[str] = None):
                     content = content.replace('content="Visualiza brackets, equipos y resultados del torneo en tiempo real."', f'content="{desc}"')
                 
                 # Update URL
-                target_url = f"https://tourneydoc.victormenjon.es/tournament?id={id}"
-                content = content.replace('content="https://tourneydoc.victormenjon.es/tournament"', f'content="{target_url}"')
+                target_url = f"{DOC_URL}/tournament?id={id}"
+                content = content.replace(f'content="{DOC_URL}/tournament"', f'content="{target_url}"')
         except Exception as e:
             print(f"SSR Error tournament: {e}")
 
