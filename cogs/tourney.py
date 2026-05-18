@@ -265,6 +265,7 @@ class Tourney(commands.Cog):
         embed_admin.add_field(name=f"{PREFIX}tourney set winner <@miembro>", value="Define el ganador mencionando a un integrante.", inline=False)
         embed_admin.add_field(name=f"{PREFIX}tourney settings", value="Ver configuración actual.", inline=False)
         embed_admin.add_field(name=f"{PREFIX}tourney roles [add/remove] <@rol>", value="Gestionar roles de admin.", inline=False)
+        embed_admin.add_field(name=f"{PREFIX}tourney blacklist [add/remove] <@usuario>", value="Gestionar blacklist del torneo.", inline=False)
         embed_admin.add_field(name=f"{PREFIX}tourney kick <id_equipo / @miembro>", value="Expulsar equipo del torneo.", inline=False)
         embed_admin.add_field(name=f"{PREFIX}tourney delete <id_torneo>", value="Elimina un torneo de la base de datos.", inline=False)
         
