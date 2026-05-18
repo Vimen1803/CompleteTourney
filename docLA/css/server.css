@@ -404,3 +404,67 @@ a {
     overflow-wrap: break-word;
     word-break: break-word;
 }
+
+/* Data Tables */
+.table-container {
+    width: 100%;
+    overflow-x: auto;
+    background: var(--bg-tertiary);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+}
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+.data-table th, .data-table td {
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-normal);
+}
+.data-table th {
+    background: rgba(0, 0, 0, 0.2);
+    color: var(--text-header);
+    font-weight: 600;
+}
+.data-table tr:hover td {
+    background: rgba(255, 255, 255, 0.03);
+}
+.data-table td small {
+    display: inline-block;
+    margin-top: 4px;
+}
+.btn-modern {
+    background: var(--bg-secondary);
+    color: var(--text-normal);
+    border: 1px solid var(--border);
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+.btn-modern:hover {
+    background: var(--card-hover);
+    color: white;
+}
+.btn-modern.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+}
+.btn-modern.primary:hover {
+    background: var(--accent-hover);
+}
+.btn-modern.danger {
+    background: var(--danger);
+    border-color: var(--danger);
+    color: white;
+}
+.btn-modern.danger:hover {
+    background: #d83c3e;
+}
