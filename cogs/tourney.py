@@ -77,6 +77,12 @@ class Tourney(commands.Cog):
             return False
         return True
 
+    async def server_admin_check(self, ctx):
+        if not ctx.author.guild_permissions.administrator:
+            await ctx.send(embed=self.get_embed("Error", "Solo los administradores del servidor pueden ejecutar este comando.", discord.Color.red(), author=ctx.author))
+            return False
+        return True
+
     async def channel_check(self, ctx):
         """
         Se encarga de verificar si el comando se está ejecutando en los canales permitidos.
@@ -1080,7 +1086,7 @@ class Tourney(commands.Cog):
         """
         Muestra los roles permitidos
         """
-        if not await self.admin_check(ctx): return
+        if not await self.server_admin_check(ctx): return
         
         config = await DBManager.get_guild_config(ctx.guild.id)
         if not config:
@@ -1096,7 +1102,7 @@ class Tourney(commands.Cog):
         """
         Añade un rol a los permitidos
         """
-        if not await self.admin_check(ctx): return
+        if not await self.server_admin_check(ctx): return
         
         config = await DBManager.get_or_create_guild_config(ctx.guild.id)
         current_roles = config.get("admin_roles", [])
@@ -1113,7 +1119,7 @@ class Tourney(commands.Cog):
         """
         Elimina un rol de los permitidos
         """ 
-        if not await self.admin_check(ctx): return
+        if not await self.server_admin_check(ctx): return
         
         config = await DBManager.get_or_create_guild_config(ctx.guild.id)
         current_roles = config.get("admin_roles", [])
