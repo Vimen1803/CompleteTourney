@@ -51,13 +51,20 @@ async function loadTournament(force = false) {
         return;
     }
 
-    // Check if user is logged in
-    // Check if user is logged in (Data is already in data.is_logged_in from tournament fetch)
-    // Legacy user-section update removed as it's handled by layout.js
+    // Mostrar spinner solo en la primera carga (cuando no hay datos previos)
+    if (!tourneyData && !force) {
+        document.getElementById('content').innerHTML = `
+            <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:300px; gap:16px; color:var(--text-muted);">
+                <div style="width:40px; height:40px; border:3px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin 0.8s linear infinite;"></div>
+                <p style="margin:0; font-size:0.95em;">Cargando torneo...</p>
+            </div>
+            <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+        `;
+    }
 
     try {
         const res = await fetch(`/api/guild/${guildId}/tournament/${tourneyId}`);
-        if(!res.ok) throw new Error("Not Found");
+        if(!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         
         // Fetch guild info for icon fallback and store globally
@@ -157,6 +164,19 @@ async function loadTournament(force = false) {
         const generalClass = activeTab === 'general' ? 'tab-link active' : 'tab-link';
         const matchupsClass = activeTab === 'matchups' ? 'tab-link active' : 'tab-link';
 
+        // Contenido de la pestaña Enfrentamientos
+        const hasMatches = t.matches && t.matches.length > 0 && t.matches[0] && t.matches[0].length > 0;
+        const matchupsContent = hasMatches
+            ? '' // El bracket se muestra como fondo del div
+            : `<div style="text-align:center; padding: 60px 20px; color:rgba(255,255,255,0.7);">
+                    <i class="fas fa-trophy" style="font-size:4rem; opacity:0.4; margin-bottom:20px; display:block;"></i>
+                    <p style="font-size:1.1em; font-weight:500; margin:0;">
+                        ${t.status === 'open' ? 'Las inscripciones están abiertas. Los enfrentamientos se generarán al iniciar el torneo.' :
+                          t.status === 'pending' ? 'El torneo está en espera. Los enfrentamientos se generarán pronto.' :
+                          'No hay enfrentamientos disponibles aún.'}
+                    </p>
+                </div>`;
+
         document.getElementById('content').innerHTML = `
             ${loginBannerHtml}
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
@@ -251,11 +271,20 @@ async function loadTournament(force = false) {
                 </div>
             </div>
             
-            <div id="tab-matchups" style="display: ${matchupsDisplay}; min-height: calc(100vh - 200px); width: 100%; align-items: center; justify-content: center; border-radius: 12px; ${bracketStyle}"></div>
+            <div id="tab-matchups" style="display: ${matchupsDisplay}; min-height: calc(100vh - 200px); width: 100%; align-items: center; justify-content: center; border-radius: 12px; ${bracketStyle}">${matchupsContent}</div>
         `;
     } catch(e) {
+        console.error('Error loading tournament:', e);
         if (!tourneyData) {
-            document.getElementById('content').innerHTML = "<h1>Error cargando torneo</h1><p>Es posible que no exista o no tengas permisos.</p>";
+            document.getElementById('content').innerHTML = `
+                <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:300px; gap:16px; text-align:center; padding:40px;">
+                    <i class="fas fa-exclamation-triangle" style="font-size:3rem; color:#ed4245; opacity:0.7;"></i>
+                    <h2 style="margin:0; color:var(--text-header);">No se pudo cargar el torneo</h2>
+                    <p style="color:var(--text-muted); margin:0;">Es posible que el torneo no exista o haya un problema de conexión.</p>
+                    <button onclick="loadTournament(true)" style="background:var(--accent); color:white; border:none; padding:10px 24px; border-radius:8px; cursor:pointer; font-size:0.95em;">
+                        <i class="fas fa-redo"></i> Reintentar
+                    </button>
+                </div>`;
         }
     }
 }
