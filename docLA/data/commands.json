@@ -132,9 +132,7 @@
       "name": "tourney set winner",
       "desc": "Define el ganador de una partida manualmente.",
       "usage": ",tourney set winner [@miembro]"
-    }
-  ],
-  "Admin": [
+    },
     {
       "name": "tourney settings",
       "desc": "Muestra la configuración actual del servidor.",
@@ -181,7 +179,9 @@
           "usage": ",tourney set logs [id_canal]"
         }
       ]
-    },
+    }
+  ],
+  "Admin": [
     {
       "name": "tourney roles",
       "desc": "Gestiona roles permitidos para ser Encargado.",
