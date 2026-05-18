@@ -560,41 +560,49 @@ class Tourney(commands.Cog):
         capacity = tourney.get('max_teams', 16)
         num_matches = capacity // 2
         matches = [None] * num_matches
-        
-        half = num_matches // 2
-        left_indices = list(range(0, half))
-        right_indices = list(range(half, num_matches))
-        
-        fill_order = []
-        for l, r in zip(left_indices, right_indices):
-            fill_order.append(l)
-            fill_order.append(r)
-        
-        if len(right_indices) > len(left_indices):
-            fill_order.append(right_indices[-1])
-            
-        shuffled_teams = list(teams)
-        random.shuffle(shuffled_teams)
-        
+
         for i in range(num_matches):
             matches[i] = {"team1_id": None, "team2_id": None, "winner_id": None, "channel_id": None}
-            
-        for idx in fill_order:
-            if not shuffled_teams: break
-            matches[idx]['team1_id'] = shuffled_teams.pop(0)['id']
-            
-        for idx in fill_order:
-            if not shuffled_teams: break
-            matches[idx]['team2_id'] = shuffled_teams.pop(0)['id']
-            
+
+        # --- Seeding estándar de eliminación simple ---
+        # Método halving recursivo: seed 1 vs 2 solo en final,
+        # seed 1 vs 3/4 solo en semis, etc.
+        # Ejemplo 4 matches → seed_order = [1, 4, 2, 3]
+        # Match 0: seed1 vs seed8 | Match 1: seed4 vs seed5
+        # Match 2: seed2 vs seed7 | Match 3: seed3 vs seed6
+        seed_order = [1]
+        while len(seed_order) < num_matches:
+            new_order = []
+            total = len(seed_order) * 2 + 1
+            for s in seed_order:
+                new_order.append(s)
+                new_order.append(total - s)
+            seed_order = new_order
+
+        shuffled_teams = list(teams)
+        random.shuffle(shuffled_teams)
+
+        # Asignar team1 según seed_order
+        for match_idx, seed_pos in enumerate(seed_order):
+            real_idx = seed_pos - 1  # seed_pos es 1-based
+            if real_idx < len(shuffled_teams):
+                matches[match_idx]['team1_id'] = shuffled_teams[real_idx]['id']
+
+        # Asignar team2 como el "opuesto" del seed: seed S enfrenta seed (capacity+1-S)
+        for match_idx, seed_pos in enumerate(seed_order):
+            opponent_seed = capacity + 1 - seed_pos
+            real_idx = opponent_seed - 1
+            if real_idx < len(shuffled_teams):
+                matches[match_idx]['team2_id'] = shuffled_teams[real_idx]['id']
+
         for i in range(num_matches):
             m = matches[i]
             if not m['team1_id']:
-                 m['winner_id'] = "BYE_SLOT"
+                m['winner_id'] = "BYE_SLOT"
             elif not m['team2_id']:
-                 m['winner_id'] = m['team1_id']
+                m['winner_id'] = m['team1_id']
             else:
-                 m['winner_id'] = None
+                m['winner_id'] = None
 
         tourney['status'] = "active"
         tourney['current_round'] = 1
