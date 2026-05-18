@@ -728,11 +728,25 @@ class Tourney(commands.Cog):
                     channel = await guild.create_text_channel(ch_name, category=category, overwrites=overwrites)
                     match['channel_id'] = channel.id
                     
-                    embed = self.get_embed("Enfrentamiento", f"**{t1['name']}** vs **{t2['name']}**", author=ctx.author)
-                    embed.add_field(name=t1['name'], value="\n".join([f"<@{m}>" for m in t1['members']]))
-                    embed.add_field(name=t2['name'], value="\n".join([f"<@{m}>" for m in t2['members']]))
-                    await channel.send(embed=embed)
-                    await channel.send(f"<@{t1['leader_id']}> <@{t2['leader_id']}> ¡Comenzad!")
+                    import time
+                    now = int(time.time())
+                    end_time = now + 600 # 10 minutos
+                    
+                    t1_mentions = " ".join([f"<@{m}>" for m in t1['members']])
+                    t2_mentions = " ".join([f"<@{m}>" for m in t2['members']])
+                    content_mentions = f"{t1_mentions}\n{t2_mentions}"
+
+                    desc = (
+                        f"**Inicio de la Partida:** <t:{now}:T> | <t:{now}:R>\n"
+                        f"**Fin de la Partida:** <t:{end_time}:T> | <t:{end_time}:R>\n\n"
+                        f"**NORMAS DE LA PARTIDA**\n"
+                        f"➡ Si tardas más de 10 minutos en aparecer en el momento que tengas que jugar, se te descalificará.\n"
+                        f"➡ <@{t1['leader_id']}> pasará el link de la sala.\n"
+                        f"➡ Para confirmar el ganador mandar una captura donde salga el jugador que ganó."
+                    )
+                    
+                    embed = self.get_embed(f"Enfrentamiento: {t1['name']} vs {t2['name']}", desc, author=ctx.author)
+                    await channel.send(content=content_mentions, embed=embed)
                     
                 except Exception as e:
                     print(f"Error creating channel: {e}")
