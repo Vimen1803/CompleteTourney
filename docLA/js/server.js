@@ -1130,7 +1130,7 @@ async function loadBlacklist() {
                         <td>${b.reason}</td>
                         <td>${b.date}</td>
                         <td>
-                            <button onclick="removeBlacklistUser('${b.user_id}')" class="btn-modern danger"><i class="fas fa-trash"></i> Eliminar</button>
+                            <button onclick="removeBlacklistUser('${b.user_id}')" class="btn-modern danger"><i class="fas fa-trash"></i></button>
                         </td>
                     </tr>
                 `;
