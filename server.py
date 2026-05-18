@@ -1138,11 +1138,15 @@ async def get_blacklist_api(guild_id: int, request: Request):
     # Resolve names from Discord API if needed, or return as is.
     resolved_bl = []
     for entry in bl:
-        mem = await asyncio.to_thread(DiscordAPI.get_guild_member, str(guild_id), entry['user_id'])
+        mem = await asyncio.to_thread(DiscordAPI.get_guild_member, str(guild_id), str(entry['user_id']))
         name = mem.get('user', {}).get('global_name') or mem.get('user', {}).get('username') if mem else f"Unknown ({entry['user_id']})"
         entry['user_name'] = name
         if '_id' in entry:
             entry['_id'] = str(entry['_id'])
+        entry['user_id'] = str(entry['user_id'])
+        if 'added_by' in entry:
+            entry['added_by'] = str(entry['added_by'])
+        entry['guild_id'] = str(entry['guild_id'])
         resolved_bl.append(entry)
         
     return JSONResponse(content={"blacklist": resolved_bl})
@@ -1173,12 +1177,16 @@ async def remove_blacklist_api(guild_id: int, request: Request):
     user = request.session.get("user")
     if not user: return JSONResponse(status_code=401, content={"error": "Login required"})
     
-    data = await request.json()
-    user_id = data.get("user_id")
-    if not user_id: return JSONResponse(status_code=400, content={"error": "Missing user_id"})
-    
-    await DBManager.remove_from_blacklist(guild_id, int(user_id))
-    return JSONResponse(content={"status": "removed"})
+    try:
+        data = await request.json()
+        user_id = data.get("user_id")
+        if not user_id: return JSONResponse(status_code=400, content={"error": "Missing user_id"})
+        
+        await DBManager.remove_from_blacklist(guild_id, int(user_id))
+        return JSONResponse(content={"status": "removed"})
+    except Exception as e:
+        print(f"Error in remove_blacklist_api: {e}")
+        return JSONResponse(status_code=500, content={"error": str(e)})
 # APP MOUNT
 # APP MOUNT
 # Mount specific static folder (optional usage in HTML like /static/css/...)
