@@ -92,6 +92,37 @@ function animateCounter(id, target) {
 
 // Initial fetch
 fetchStats();
+fetchUserStatus();
+
+// Fetch user status
+async function fetchUserStatus() {
+    try {
+        const response = await fetch('/api/user');
+        if (response.ok) {
+            const data = await response.json();
+            if (data && data.id) {
+                const navActions = document.getElementById('nav-actions');
+                if (navActions) {
+                    navActions.innerHTML = `
+                        <a href="/dashboard" class="cta-btn" style="background-color: var(--card-bg); border: 1px solid var(--border); color: var(--text-header);">
+                            <i class="fas fa-server" style="margin-right: 8px"></i>
+                            Dashboard
+                        </a>
+                        <a href="/logout" class="cta-btn" style="background-color: #ed4245;">
+                            <i class="fas fa-sign-out-alt" style="margin-right: 8px"></i>
+                            Cerrar Sesión
+                        </a>
+                        <button class="mobile-menu-btn" id="mobileMenuBtn">
+                          <i class="fas fa-bars"></i>
+                        </button>
+                    `;
+                }
+            }
+        }
+    } catch(e) {
+        console.error("Error fetching user status", e);
+    }
+}
 
 // Mobile menu (básico)
 const mobileMenuBtn = document.getElementById('mobileMenuBtn');
