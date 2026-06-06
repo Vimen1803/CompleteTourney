@@ -230,7 +230,7 @@ async function loadTournament(force = false) {
                 
                 <div class="grid-layout">
                     <div class="main-column">
-                        <div class="section-card" style="height: auto; min-width:205%;">
+                        <div class="section-card" style="height: auto;">
                             <h2><i class="fas fa-users"></i> Equipos Registrados (${teams.length}/${t.max_teams})</h2>
                             <div class="team-list" style="margin-top:16px; overflow-y: visible; max-height: none;">
                                 ${!isLoggedIn || roleLabel === "Externo" ? `<p style="color:var(--text-muted); margin:0; font-size:0.9em;">Debes unirte al servidor para ver los equipos.</p>` 
@@ -255,9 +255,9 @@ async function loadTournament(force = false) {
                                     // Dynamic height + relative positioning for delete button
                                     return `
                                     <div class="team-item" style="height: calc(30 + ${t.max_members * 50}px); position: relative;">
-                                        <div class="team-name" style="padding-bottom:5px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
-                                            <span>${tm.name}</span>
-                                            <span style="font-size:0.75em; background:var(--bg-secondary); padding:2px 8px; border-radius:12px;">${tm.resolved_members.length}</span>
+                                        <div class="team-name" style="padding-bottom:5px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; gap:8px; min-width:0;">
+                                            <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0;">${tm.name}</span>
+                                            <span style="font-size:0.75em; background:var(--bg-secondary); padding:2px 8px; border-radius:12px; flex-shrink:0;">${tm.resolved_members.length}</span>
                                         </div>
                                         <div style="display:flex; flex-direction:column; gap:10px;">
                                             ${membersHtml}

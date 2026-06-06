@@ -87,9 +87,10 @@
 
 .grid-layout { 
     display: grid; 
-    grid-template-columns: 1fr 1fr; 
+    grid-template-columns: 1fr; 
     gap: 24px;
     /* height: 650px; Removed to allow growth */
+    overflow: hidden;
 }
 
 .main-column, .side-column {
@@ -127,10 +128,13 @@
     display: flex; 
     flex-direction: column; 
     gap: 15px;
-    width: 95%;
+    width: 100%;
+    min-width: 0;
+    overflow: hidden;
     border: 1px solid transparent;
     transition: all 0.2s ease;
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    box-sizing: border-box;
 }
 .team-item:hover {
     box-shadow: 0 4px 8px rgba(0,0,0,0.3);
