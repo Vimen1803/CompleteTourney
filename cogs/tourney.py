@@ -14,12 +14,73 @@ except ImportError:
     BOT_LINK = None
     DOC_URL = None
 
+
 class Tourney(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
     
     async def cog_check(self, ctx):
         return True
+
+    async def get_playing_role(self, guild):
+        """Obtiene el rol de participante configurado en la DB para el servidor."""
+        config = await DBManager.get_guild_config(guild.id)
+        if not config:
+            return None
+        role_id = config.get('playing_role_id')
+        if not role_id:
+            return None
+        role = guild.get_role(int(role_id))
+        return role
+
+    async def assign_participant_role(self, guild, member_ids):
+        """Asigna el rol de participante a los miembros indicados."""
+        role = await self.get_playing_role(guild)
+        if not role:
+            print(f"[Playing Role] No se encontró rol de participante para {guild.name}")
+            return
+        for uid in member_ids:
+            member = guild.get_member(uid)
+            if not member:
+                try:
+                    member = await guild.fetch_member(uid)
+                except:
+                    print(f"[Playing Role] No se pudo obtener miembro {uid}")
+                    continue
+            if role not in member.roles:
+                try:
+                    await member.add_roles(role, reason="Inscrito en torneo")
+                except Exception as e:
+                    print(f"[Playing Role] Error asignando rol a {uid}: {e}")
+
+    async def remove_participant_role(self, guild, member_ids):
+        """Quita el rol de participante a los miembros indicados."""
+        role = await self.get_playing_role(guild)
+        if not role:
+            return
+        for uid in member_ids:
+            member = guild.get_member(uid)
+            if not member:
+                try:
+                    member = await guild.fetch_member(uid)
+                except:
+                    continue
+            if role in member.roles:
+                try:
+                    await member.remove_roles(role, reason="Desapuntado/eliminado del torneo")
+                except Exception as e:
+                    print(f"[Playing Role] Error quitando rol a {uid}: {e}")
+
+    async def remove_participant_role_from_all(self, guild):
+        """Quita el rol de participante a TODOS los miembros del servidor que lo tengan."""
+        role = await self.get_playing_role(guild)
+        if not role:
+            return
+        for member in role.members:
+            try:
+                await member.remove_roles(role, reason="Torneo finalizado")
+            except Exception as e:
+                print(f"[Playing Role] Error quitando rol a {member.id}: {e}")
 
     def get_embed(self, title, description, color=discord.Color.blue(), author=None, url=None):
         embed = discord.Embed(title=title, description=description, color=color, url=url)
@@ -268,6 +329,7 @@ class Tourney(commands.Cog):
         embed_admin.add_field(name=f"{PREFIX}tourney blacklist [add/remove] <@usuario>", value="Gestionar blacklist del torneo.", inline=False)
         embed_admin.add_field(name=f"{PREFIX}tourney kick <id_equipo / @miembro>", value="Expulsar equipo del torneo.", inline=False)
         embed_admin.add_field(name=f"{PREFIX}tourney delete <id_torneo>", value="Elimina un torneo de la base de datos.", inline=False)
+        embed_admin.add_field(name=f"{PREFIX}tourney set playing <@rol>", value="Configura el rol de participante (se asigna al inscribirse y se menciona en brackets).", inline=False)
         
         pages = [embed_user, embed_admin]
         
@@ -415,6 +477,9 @@ class Tourney(commands.Cog):
         
         await DBManager.delete_teams_by_tournament(tourney_id)
         
+        # Quitar rol de participante a todos los que lo tengan
+        await self.remove_participant_role_from_all(ctx.guild)
+        
         await DBManager.delete_tournament(tourney_id)
         await DBManager.decrement_tournaments()
         
@@ -459,9 +524,11 @@ class Tourney(commands.Cog):
         lobby_channel_id = config.get('lobby_channel_id')
         bot_admin_channel_id = config.get('bot_admin_channel_id')
         tourney_log_channel_id = config.get('tourney_log_channel_id')
+        playing_role_id = config.get('playing_role_id')
 
         def fmt_ch(val): return f"<#{val}>" if val else "No definido"
         def fmt_val(val): return val if val else "No definido"
+        def fmt_role(val): return f"<@&{val}>" if val else "No definido"
         
         desc = f"**Categoría:** {fmt_val(category_id)}\n" \
                f"**Prefijo:** `{prefix}`\n" \
@@ -469,6 +536,7 @@ class Tourney(commands.Cog):
                f"**Lobby Channel:** {fmt_ch(lobby_channel_id)}\n" \
                f"**Bot Admin Channel:** {fmt_ch(bot_admin_channel_id)}\n" \
                f"**Logs Channel:** {fmt_ch(tourney_log_channel_id)} ({logs_state})\n" \
+               f"**Rol Playing:** {fmt_role(playing_role_id)}\n" \
                f"**Roles Admin:** {roles_str}"
                
         await ctx.send(embed=self.get_embed(f"Configuración del Servidor", desc, author=ctx.author))
@@ -683,7 +751,9 @@ class Tourney(commands.Cog):
             ch = guild.get_channel(bracket_channel_id)
             if ch:
                 file = discord.File(bracket_buf, filename="bracket.png")
-                msg = await ch.send(content=f"Ronda {round_num}", file=file)
+                playing_role_id = config.get('playing_role_id')
+                role_mention = f" <@&{playing_role_id}>" if playing_role_id else ""
+                msg = await ch.send(content=f"Ronda {round_num}{role_mention}", file=file, allowed_mentions=discord.AllowedMentions(roles=True))
                 if msg.attachments:
                     await DBManager.update_tournament(tourney['id'], {"last_bracket_url": msg.attachments[0].url})
 
@@ -710,8 +780,8 @@ class Tourney(commands.Cog):
             
             if t1 and t2 and category:
                 overwrites = {
-                    guild.default_role: discord.PermissionOverwrite(read_messages=False),
-                    guild.me: discord.PermissionOverwrite(read_messages=True)
+                    guild.default_role: discord.PermissionOverwrite(read_messages=False, attach_files=False),
+                    guild.me: discord.PermissionOverwrite(read_messages=True, attach_files=True)
                 }
                 
                 # Dar acceso a los roles de admin configurados en la DB
@@ -728,7 +798,7 @@ class Tourney(commands.Cog):
                 for uid in match_members:
                     member = guild.get_member(uid)
                     if member:
-                        overwrites[member] = discord.PermissionOverwrite(read_messages=True, send_messages=True)
+                        overwrites[member] = discord.PermissionOverwrite(read_messages=True, send_messages=True, attach_files=True)
                 
                 ch_name = f"{t1['name']}-vs-{t2['name']}"
                 try:
@@ -810,6 +880,16 @@ class Tourney(commands.Cog):
         Establece el canal donde se realizarán las acciones administrativas del bot.
         """
         await self.update_setting_helper(ctx, "bot_admin_channel_id", channel_id)
+
+    @tourney_set.command(name="playing")
+    async def set_playing(self, ctx, role: discord.Role):
+        """
+        Establece el rol de participante que se asigna al inscribirse en un torneo.
+        """
+        if not await self.admin_check(ctx): return
+        
+        await DBManager.update_guild_config_field(ctx.guild.id, "playing_role_id", role.id)
+        await ctx.send(embed=self.get_embed("Configuración Actualizada", f"**Rol Playing** actualizado a {role.mention}", author=ctx.author))
 
     @tourney_set.command(name="logs")
     async def set_logs(self, ctx, channel_id: str = None):
@@ -975,6 +1055,9 @@ class Tourney(commands.Cog):
             tourney['status'] = "finished"
             tourney['winner_id'] = winner_team['id']
             await DBManager.update_tournament(tourney['id'], {"status": "finished", "winner_id": winner_team['id']})
+            
+            # Quitar rol de participante a todos los usuarios que lo tengan
+            await self.remove_participant_role_from_all(ctx.guild)
             ENLACE_TORNEO = f"{DOC_URL}tournament?guild={ctx.guild.id}&tourney={tourney['id']}"
             
             embed = discord.Embed(
@@ -1020,8 +1103,18 @@ class Tourney(commands.Cog):
             await target_channel.send(embed=embed)
             
         else:
+            # Borrar los canales de enfrentamiento de la ronda que acaba de terminar
+            prev_round_matches = tourney['matches'][tourney['current_round'] - 1]
+            for m in prev_round_matches:
+                if m.get('channel_id'):
+                    try:
+                        channel = ctx.guild.get_channel(m['channel_id'])
+                        if channel:
+                            await channel.delete(reason=f"Ronda {tourney['current_round']} finalizada")
+                    except Exception as e:
+                        print(f"Error deleting channel {m['channel_id']}: {e}")
+
             tourney['current_round'] += 1
-            matches = []
             matches = []
             for i in range(0, len(winners), 2):
                 if i + 1 < len(winners):
@@ -1458,6 +1551,10 @@ class Tourney(commands.Cog):
                 discord.Color.blue()
             )
 
+        # Asignar rol de participante a todo el equipo
+        if guild:
+            await self.assign_participant_role(guild, data['members'])
+
         del self.pending_teams[pending_id]
         
     @tourney.command(name="invite")
@@ -1535,6 +1632,8 @@ class Tourney(commands.Cog):
             
         if len(team['members']) == 1:
             await DBManager.delete_team(team['id'])
+            # Quitar rol de participante
+            await self.remove_participant_role(ctx.guild, [ctx.author.id])
             await self.send_log(
                 ctx.guild, active_tourney['id'],
                 "🗑️ Equipo Disuelto",
@@ -1555,6 +1654,9 @@ class Tourney(commands.Cog):
             msg_extra = f"\nEl liderazgo ha pasado a <@{new_leader_id}>."
             
         await DBManager.update_team(team['id'], update_data)
+        
+        # Quitar rol de participante al miembro que sale
+        await self.remove_participant_role(ctx.guild, [ctx.author.id])
         
         await self.send_log(
             ctx.guild, active_tourney['id'],
@@ -1610,7 +1712,11 @@ class Tourney(commands.Cog):
         
         team_name = team['name']
         team_id = team['id']
+        team_members = team.get('members', [])
         await DBManager.delete_team(team_id)
+        
+        # Quitar rol de participante a todos los miembros del equipo kickeado
+        await self.remove_participant_role(ctx.guild, team_members)
         
         await self.send_log(
             ctx.guild, tourney['id'],
@@ -1803,6 +1909,13 @@ class ConfirmInviteView(discord.ui.View):
         team['members'].append(interaction.user.id)
         from utils.db import teams_collection
         await teams_collection.update_one({"id": self.team_id}, {"$set": {"members": team['members']}})
+        
+        # Asignar rol de participante al nuevo miembro
+        tourney_data = await DBManager.get_tournament(team['tournament_id'])
+        if tourney_data:
+            invite_guild = self.bot.get_guild(tourney_data['guild_id'])
+            if invite_guild:
+                await self.cog.assign_participant_role(invite_guild, [interaction.user.id])
         
         tourney = await DBManager.get_tournament(team['tournament_id'])
         if tourney:
