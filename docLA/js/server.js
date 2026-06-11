@@ -354,8 +354,8 @@ if (data.history && data.history.length > 0) {
                 <div class="active-tourney-hero clickable" onclick="window.location.href='/tournament?guild=${currentGuildId}&tourney=${t.id}'" style="margin-bottom:0; box-shadow:0 4px 15px rgba(0,0,0,0.3);">
                     <div class="hero-bg" style="${bgStyle} background-size:cover; background-position:center;"></div>
                     <div class="hero-overlay">
-                        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
-                            <div style="display:flex; gap:16px; font-size:1em; color:rgba(255,255,255,0.9); font-weight:bold; text-shadow:0 1px 2px rgba(0,0,0,0.8);">
+                        <div style="display:flex; flex-direction:column; align-items:flex-start; gap:12px; margin-bottom:12px;">
+                            <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center; font-size:1em; color:rgba(255,255,255,0.9); font-weight:bold; text-shadow:0 1px 2px rgba(0,0,0,0.8);">
                                 <span class="badge" style="background:${badgeColor}; font-size:0.9em;">${st}</span>
                                 ${winnerHtml}
                             </div>
