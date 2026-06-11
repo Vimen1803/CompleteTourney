@@ -961,12 +961,17 @@ document.getElementById("edit-t-start").value = t.start_time || "";
 
 document.getElementById("edit-t-img").value = t.image_url || "";
 
-// Status Populating
+// Status Populating: desde la web solo se abren/cierran inscripciones (open <-> pending).
+// Iniciar o finalizar el torneo es exclusivo del bot.
 const statusGroup = document.getElementById('edit-t-status-group');
 const statusSelect = document.getElementById('edit-t-status');
 if(statusGroup && statusSelect) {
-    statusGroup.style.display = 'block';
-    statusSelect.value = t.status;
+    if(t.status === 'open' || t.status === 'pending') {
+        statusGroup.style.display = 'block';
+        statusSelect.value = t.status;
+    } else {
+        statusGroup.style.display = 'none';
+    }
 }
 
 // Store initial state
@@ -1006,7 +1011,11 @@ const startTime = document.getElementById("edit-t-start").value;
 let img = document.getElementById("edit-t-img").value;
 const fileInput = document.getElementById("edit-t-img-file");
 
-const status = document.getElementById("edit-t-status").value;
+// Solo enviamos estado si el control de inscripciones está visible (torneo en open/pending)
+const statusGroupEl = document.getElementById("edit-t-status-group");
+const status = (statusGroupEl && statusGroupEl.style.display !== "none")
+    ? document.getElementById("edit-t-status").value
+    : null;
 
 try {
     const fileImg = await processImageFile(fileInput);

@@ -265,13 +265,14 @@
                             <input type="text" id="edit-t-desc" class="form-input" maxlength="1000" required oninput="updatePreview('edit')"/>
                           </div>
                           <div class="form-group" id="edit-t-status-group" style="display:none;">
-                            <label class="form-label">Estado del Torneo</label>
+                            <label class="form-label">Inscripciones</label>
                             <select id="edit-t-status" class="form-select" onchange="updatePreview('edit')">
-                                <option value="pending">En Espera</option>
-                                <option value="open">Abierto</option>
-                                <option value="active">En Curso</option>
-                                <option value="finished">Finalizado</option>
+                                <option value="open">Abiertas</option>
+                                <option value="pending">Cerradas (En espera)</option>
                             </select>
+                            <small style="color: var(--text-muted); display:block; margin-top:6px;">
+                                <i class="fas fa-info-circle"></i> Iniciar o finalizar el torneo solo es posible desde el bot.
+                            </small>
                           </div>
                       </div>
     

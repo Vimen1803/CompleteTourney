@@ -41,6 +41,68 @@ window.deleteTeam = async function(guildId, teamId) {
     }
 }
 
+// Genera el bracket en HTML a partir de los enfrentamientos guardados en la BD
+// (t.matches: lista de rondas; cada ronda es una lista de {team1_id, team2_id, winner_id}).
+function renderBracketFromMatches(matches, teams, championId) {
+    if (!matches || matches.length === 0) return '';
+
+    const nameById = {};
+    (teams || []).forEach(tm => { nameById[String(tm.id)] = tm.name; });
+
+    const roundLabel = (count, idx) => {
+        if (count === 1) return 'Final';
+        if (count === 2) return 'Semifinales';
+        if (count === 4) return 'Cuartos de Final';
+        if (count === 8) return 'Octavos de Final';
+        if (count === 16) return 'Dieciseisavos';
+        return `Ronda ${idx + 1}`;
+    };
+
+    const slot = (id, winnerId) => {
+        const isBye = id === 'BYE_SLOT';
+        const isTBD = !id;
+        const isWinner = id && id !== 'BYE_SLOT' && winnerId && String(id) === String(winnerId);
+        const cls = ['bracket-team'];
+        if (isWinner) cls.push('winner');
+        if (isBye) cls.push('bye');
+        if (isTBD) cls.push('tbd');
+        const label = isTBD ? 'Por definir' : (isBye ? 'BYE' : (nameById[String(id)] || 'Equipo'));
+        const icon = isWinner ? '<i class="fas fa-check"></i>' : '';
+        return `<div class="${cls.join(' ')}"><span class="bracket-team-name">${escapeHtml(label)}</span>${icon}</div>`;
+    };
+
+    const columns = matches.map((round, idx) => {
+        const matchesHtml = round.map(m => `
+            <div class="bracket-match">
+                ${slot(m.team1_id, m.winner_id)}
+                ${slot(m.team2_id, m.winner_id)}
+            </div>
+        `).join('');
+        return `
+            <div class="bracket-round">
+                <div class="bracket-round-title">${roundLabel(round.length, idx)}</div>
+                <div class="bracket-round-matches">${matchesHtml}</div>
+            </div>
+        `;
+    }).join('');
+
+    let championHtml = '';
+    if (championId && championId !== 'BYE_SLOT') {
+        const champName = nameById[String(championId)] || 'Campeón';
+        championHtml = `
+            <div class="bracket-round champion">
+                <div class="bracket-round-title">Campeón</div>
+                <div class="bracket-champion">
+                    <i class="fas fa-crown"></i>
+                    <span>${escapeHtml(champName)}</span>
+                </div>
+            </div>
+        `;
+    }
+
+    return `<div class="bracket-wrap">${columns}${championHtml}</div>`;
+}
+
 async function loadTournament(force = false) {
     const params = new URLSearchParams(window.location.search);
     const guildId = params.get('guild');
@@ -149,10 +211,6 @@ async function loadTournament(force = false) {
         if(t.status === 'open' || t.status === 'active') statusColor = '#3ba55c'; // Green
         else if(t.status === 'finished') statusColor = '#ed4245'; // Red
         
-        const bracketStyle = t.last_bracket_url 
-            ? `background-image: url('${t.last_bracket_url}'); background-repeat: no-repeat; background-position: center; background-size: contain;` 
-            : `background: var(--bg-secondary);`;
-
         const winnerHtml = t.winner_name ?
             `<div style="padding: 4px 10px; border-radius: 4px; font-size: 0.8em; font-weight: bold; text-transform: uppercase; background:#ffd700; color:black; display:flex; align-items:center; gap:6px; box-shadow:0 2px 4px rgba(0,0,0,0.5);">
                 <i class="fas fa-crown"></i> ${escapeHtml(t.winner_name)}
@@ -167,7 +225,7 @@ async function loadTournament(force = false) {
         // Contenido de la pestaña Enfrentamientos
         const hasMatches = t.matches && t.matches.length > 0 && t.matches[0] && t.matches[0].length > 0;
         const matchupsContent = hasMatches
-            ? '' // El bracket se muestra como fondo del div
+            ? renderBracketFromMatches(t.matches, teams, t.winner_id)
             : `<div style="text-align:center; padding: 60px 20px; color:rgba(255,255,255,0.7);">
                     <i class="fas fa-trophy" style="font-size:4rem; opacity:0.4; margin-bottom:20px; display:block;"></i>
                     <p style="font-size:1.1em; font-weight:500; margin:0;">
@@ -271,7 +329,7 @@ async function loadTournament(force = false) {
                 </div>
             </div>
             
-            <div id="tab-matchups" style="display: ${matchupsDisplay}; min-height: calc(100vh - 200px); width: 100%; align-items: center; justify-content: center; border-radius: 12px; ${bracketStyle}">${matchupsContent}</div>
+            <div id="tab-matchups" style="display: ${matchupsDisplay}; min-height: calc(100vh - 200px); width: 100%; align-items: center; justify-content: ${hasMatches ? 'flex-start' : 'center'}; border-radius: 12px; background: var(--bg-secondary); overflow-x: auto; padding: ${hasMatches ? '28px' : '0'};">${matchupsContent}</div>
         `;
     } catch(e) {
         console.error('Error loading tournament:', e);
@@ -472,19 +530,19 @@ window.editTournament = function() {
     
     document.getElementById('edit-t-img').value = t.image_url || "";
     
-    // Status Logic
+    // Status Logic: desde la web solo se abren/cierran inscripciones (open <-> pending).
+    // Iniciar (active) o finalizar (finished) es exclusivo del bot, así que el control
+    // solo aparece mientras el torneo esté en open o pending.
     const statusGroup = document.getElementById('edit-t-status-group');
     const statusSelect = document.getElementById('edit-t-status');
-    
-    // Always show status group in Edit Mode for flexibility, or keep dependent logic?
-    // User requested adding label/dropdown. In server.html I made it always visible if logic allows.
-    // Here currently existing logic was: if open/pending show it.
-    // I'll update it to always show unless maybe finished?
-    // "en el form de editar tienes que añadir un label para el estado".
-    // I'll make it visible regardless of current status so user can change it (e.g. from Open to Active).
+
     if(statusGroup) {
-        statusGroup.style.display = 'block';
-        if(statusSelect) statusSelect.value = t.status;
+        if(t.status === 'open' || t.status === 'pending') {
+            statusGroup.style.display = 'block';
+            if(statusSelect) statusSelect.value = t.status;
+        } else {
+            statusGroup.style.display = 'none';
+        }
     }
     
     // Store Initial State

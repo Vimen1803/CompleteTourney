@@ -1061,9 +1061,13 @@ async def update_tournament(guild_id: int, tournament_id: str, request: Request)
             img_url = None
         update_data["image_url"] = img_url
 
-    if "status" in data and data["status"] in ["pending", "open", "active", "finished"]:
-        update_data["status"] = data["status"]
-    
+    # Desde la web solo se permite ABRIR/CERRAR inscripciones (open <-> pending).
+    # Iniciar (active) o finalizar (finished) un torneo es exclusivo del bot, y solo
+    # se permite si el torneo aún está en open/pending (no se puede reabrir uno iniciado).
+    if "status" in data and data["status"] in ["pending", "open"]:
+        if current_t.get("status") in ["pending", "open"]:
+            update_data["status"] = data["status"]
+
     if not update_data: return JSONResponse(content={"status": "no_changes"})
 
     await DBManager.update_tournament(tournament_id, update_data)
