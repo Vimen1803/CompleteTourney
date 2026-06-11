@@ -28,7 +28,8 @@ class DiscordAPI:
                 guilds.extend(data)
                 if len(data) < 200: break
                 after = data[-1]['id']
-        except: pass
+        except Exception as e:
+            print(f"[DiscordAPI] Error obteniendo guilds del bot: {e}")
         return guilds
 
     @staticmethod

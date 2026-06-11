@@ -77,8 +77,8 @@ class Admin(commands.Cog):
                         inv = await target_ch.create_invite(max_age=0, max_uses=0, reason="Admin request")
                         invite_url = inv.url
                         await DBManager.update_guild_config_field(guild.id, 'invite_url', invite_url)
-                except:
-                    pass
+                except Exception as e:
+                    print(f"[servers] No se pudo crear invitación para {guild.name}: {e}")
 
             if invite_url.startswith("http"):
                 value_str = f"`{guild.id}`\n[Ir al servidor]({invite_url})"

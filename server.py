@@ -1,4 +1,4 @@
-from cogs.tourney import DOC_URL
+from cogs.tourney import DOC_URL, MAX_TOURNEY_NAME_LEN, MAX_TOURNEY_DESC_LEN
 from fastapi import FastAPI, Request, HTTPException, Depends
 from fastapi.responses import RedirectResponse, JSONResponse, FileResponse, HTMLResponse
 from fastapi.encoders import jsonable_encoder
@@ -10,7 +10,12 @@ import uvicorn
 import os
 import asyncio
 from typing import Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+
+
+def utcnow():
+    """Ahora en UTC (aware). Reemplaza a datetime.utcnow() (deprecado)."""
+    return datetime.now(timezone.utc)
 from utils.db import DBManager
 from utils.api import DiscordAPI
 from config import DISCORD_CLIENT_ID as CLIENT_ID, DISCORD_CLIENT_SECRET as CLIENT_SECRET, REDIRECT_URI, API_ENDPOINT, SESSION_SECRET as SECRET_KEY
@@ -26,12 +31,66 @@ try:
     app.mount("/data", StaticFiles(directory="docLA/data"), name="data")
 except: pass
 
+# URL base de documentación normalizada (sin barra final) para construir enlaces sin '//'
+DOC_URL_BASE = (DOC_URL or "").rstrip("/")
+
+
+def render_html(path: str) -> str:
+    """Lee un HTML y sustituye el placeholder ${DOC_URL} por la URL base real."""
+    with open(path, "r", encoding="utf-8") as f:
+        content = f.read()
+    return content.replace("${DOC_URL}", DOC_URL_BASE)
+
+
+async def user_can_manage(guild_id: int, request: Request) -> bool:
+    """
+    Comprueba si el usuario de la sesión puede GESTIONAR el servidor:
+    es administrador (permiso OAuth) o tiene un rol de organizador configurado.
+    Reutilizable por todos los endpoints que mutan datos del servidor.
+    """
+    user = request.session.get("user")
+    token = request.session.get("access_token")
+    if not user:
+        return False
+
+    user_guilds = []
+    if token:
+        try:
+            resp = await asyncio.to_thread(
+                lambda: requests.get(
+                    f"{API_ENDPOINT}/users/@me/guilds",
+                    headers={"Authorization": f"Bearer {token}"}
+                ).json()
+            )
+            if isinstance(resp, list):
+                user_guilds = resp
+        except Exception:
+            user_guilds = []
+
+    target = next((g for g in user_guilds if g.get('id') == str(guild_id)), None)
+    if target:
+        perm_int = int(target.get('permissions', 0))
+        if (perm_int & 0x8) == 0x8 or (perm_int & 0x20) == 0x20:
+            return True
+
+    # Rol de organizador configurado en la guild
+    try:
+        config = await DBManager.get_or_create_guild_config(guild_id)
+        admin_roles = config.get("admin_roles", [])
+        if admin_roles:
+            mem = await asyncio.to_thread(DiscordAPI.get_guild_member, str(guild_id), user['id'])
+            if mem and any(rid in admin_roles for rid in mem.get('roles', [])):
+                return True
+    except Exception:
+        pass
+    return False
+
 # ==========================================
 # RUTAS DE VISTAS (Clean URLs)
 # ==========================================
 @app.get("/")
 async def serve_home():
-    return FileResponse("docLA/index.html")
+    return HTMLResponse(content=render_html("docLA/index.html"))
 
 @app.get("/sitemap.xml")
 async def serve_sitemap():
@@ -43,33 +102,39 @@ async def serve_robots():
 
 @app.get("/docs")
 async def serve_docs():
-    return FileResponse("docLA/doc.html")
+    return HTMLResponse(content=render_html("docLA/doc.html"))
 
 @app.get("/dashboard")
 async def serve_dashboard():
-    return FileResponse("docLA/dashboard.html")
+    return HTMLResponse(content=render_html("docLA/dashboard.html"))
 
 @app.get("/server")
-async def serve_server(guild_id: Optional[str] = None):
+async def serve_server(guild_id: Optional[str] = None, id: Optional[str] = None):
     with open("docLA/server.html", "r", encoding="utf-8") as f:
         content = f.read()
-    
-    if guild_id:
-        # Update URL for SEO/Sharing
-        target_url = f"{DOC_URL}/server?guild_id={guild_id}"
-        content = content.replace(f'content="{DOC_URL}/server"', f'content="{target_url}"')
-        
+
+    # Aceptar tanto ?guild_id= como ?id= (el frontend usa ?id=)
+    gid = guild_id or id
+    if gid:
+        # Update URL for SEO/Sharing (sin doble barra)
+        target_url = f"{DOC_URL_BASE}/server?guild_id={gid}"
+        content = content.replace('content="${DOC_URL}/server"', f'content="{target_url}"')
+
+    # Sustituir cualquier ${DOC_URL} restante (og:image, twitter, etc.)
+    content = content.replace("${DOC_URL}", DOC_URL_BASE)
     return HTMLResponse(content=content)
 
 @app.get("/tournament")
-async def serve_tournament(id: Optional[str] = None):
+async def serve_tournament(tourney: Optional[str] = None, id: Optional[str] = None, guild: Optional[str] = None):
     with open("docLA/tournament.html", "r", encoding="utf-8") as f:
         content = f.read()
 
-    if id:
+    # Los enlaces reales usan ?guild=...&tourney=...; mantener ?id= como alternativa
+    tourney_id = tourney or id
+    if tourney_id:
         # Attempt to fetch tournament details for better SEO
         try:
-            t = await DBManager.get_tournament(id)
+            t = await DBManager.get_tournament(tourney_id)
             if t:
                 # Update Title
                 new_title = f"{t['name']} - Detalle del Torneo"
@@ -81,13 +146,15 @@ async def serve_tournament(id: Optional[str] = None):
                     # Basic sanitization for meta tag
                     desc = desc.replace('"', "'").replace('\n', ' ')[:150] + "..."
                     content = content.replace('content="Visualiza brackets, equipos y resultados del torneo en tiempo real."', f'content="{desc}"')
-                
-                # Update URL
-                target_url = f"{DOC_URL}/tournament?id={id}"
-                content = content.replace(f'content="{DOC_URL}/tournament"', f'content="{target_url}"')
+
+                # Update URL (sin doble barra y con los params reales)
+                target_url = f"{DOC_URL_BASE}/tournament?guild={guild or t.get('guild_id','')}&tourney={tourney_id}"
+                content = content.replace('content="${DOC_URL}/tournament"', f'content="{target_url}"')
         except Exception as e:
             print(f"SSR Error tournament: {e}")
 
+    # Sustituir cualquier ${DOC_URL} restante (og:image, twitter, etc.)
+    content = content.replace("${DOC_URL}", DOC_URL_BASE)
     return HTMLResponse(content=content)
 
 # ==========================================
@@ -351,11 +418,12 @@ async def get_guild_details(guild_id: int, request: Request):
         
         icon_url = DiscordAPI.get_icon_url(str(guild_id), guild.get('icon'))
 
-        # Convert channel IDs in config to strings to prevent JS precision loss
+        # Convert channel IDs in config to strings to prevent JS precision loss.
+        # Solo se expone la configuración a quienes pueden gestionar el servidor.
         config_safe = None
-        if config:
+        if config and can_manage:
             config_safe = dict(config)
-            id_fields = ['category_id', 'bracket_channel_id', 'lobby_channel_id', 'bot_admin_channel_id', 'tourney_log_channel_id']
+            id_fields = ['category_id', 'bracket_channel_id', 'lobby_channel_id', 'bot_admin_channel_id', 'tourney_log_channel_id', 'playing_role_id']
             for field in id_fields:
                 if config_safe.get(field):
                     config_safe[field] = str(config_safe[field])
@@ -497,7 +565,7 @@ async def get_guild_public(guild_id: int, request: Request):
         if can_manage and config:
             config_safe = dict(config)
             # Convert all channel/category IDs to strings
-            id_fields = ['category_id', 'bracket_channel_id', 'lobby_channel_id', 'bot_admin_channel_id', 'tourney_log_channel_id']
+            id_fields = ['category_id', 'bracket_channel_id', 'lobby_channel_id', 'bot_admin_channel_id', 'tourney_log_channel_id', 'playing_role_id']
             for field in id_fields:
                 if config_safe.get(field):
                     config_safe[field] = str(config_safe[field])
@@ -575,7 +643,7 @@ async def update_config(guild_id: int, request: Request):
     if not is_admin and "admin_roles" in data:
         del data["admin_roles"]
     
-    fields_to_update = ["category_id", "bracket_channel_id", "lobby_channel_id", "bot_admin_channel_id", "prefix", "tourney_log_channel_id", "tourney_logs_enabled", "admin_roles"]
+    fields_to_update = ["category_id", "bracket_channel_id", "lobby_channel_id", "bot_admin_channel_id", "prefix", "tourney_log_channel_id", "tourney_logs_enabled", "admin_roles", "playing_role_id"]
     
     for field in fields_to_update:
         if field in data:
@@ -673,7 +741,7 @@ async def status_page(request: Request):
     """
     Pagina de estado del bot
     """
-    return FileResponse("docLA/health.html")
+    return HTMLResponse(content=render_html("docLA/health.html"))
 
 
 @app.get("/api/health")
@@ -716,6 +784,30 @@ async def get_stats():
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
 
+@app.get("/api/bot/live")
+async def bot_live_status():
+    """
+    Estado en tiempo real del bot basado en el heartbeat (latido cada 30s).
+    Reemplaza la dependencia del widget de Discord y de nombres hardcodeados.
+    """
+    try:
+        hb = await DBManager.get_last_heartbeat()
+        online = False
+        latency = 0
+        if hb:
+            last_seen = hb.get("last_seen")
+            if last_seen:
+                if last_seen.tzinfo is None:
+                    last_seen = last_seen.replace(tzinfo=timezone.utc)
+                diff = (utcnow() - last_seen).total_seconds()
+                if diff <= 45:  # 30s de latido + 15s de margen
+                    online = True
+                    latency = hb.get("latency", 0)
+        return JSONResponse({"online": online, "latency": latency})
+    except Exception as e:
+        print(f"[bot_live_status] Error: {e}")
+        return JSONResponse({"online": False, "latency": 0})
+
 async def perform_health_check():
     """
     Performs a single health check and saves to DB.
@@ -729,20 +821,20 @@ async def perform_health_check():
         
         if hb_data:
             last_seen = hb_data.get('last_seen')
-            # Ensure UTC
+            # Asegurar aware-UTC (los docs legados podrían venir naïve)
             if last_seen and last_seen.tzinfo is None:
-                    last_seen = last_seen.replace(tzinfo=None)
-            
+                    last_seen = last_seen.replace(tzinfo=timezone.utc)
+
             if last_seen:
-                diff = (datetime.utcnow() - last_seen).total_seconds()
+                diff = (utcnow() - last_seen).total_seconds()
                 # Bot sends heartbeat every 30s. Allow up to 45s grace.
                 if diff <= 45:
                     status = "online"
                     latency = hb_data.get('latency', 0)
-        
+
         # Record to DB history
         await DBManager.create_health_check({
-            "timestamp": datetime.utcnow(),
+            "timestamp": utcnow(),
             "latency": latency,
             "status": status
         })
@@ -756,7 +848,7 @@ async def health_check_loop():
     """
     
     # 1. Align to next hour (:00)
-    now = datetime.utcnow()
+    now = utcnow()
     # Next hour start
     next_check_time = (now + timedelta(hours=1)).replace(minute=0, second=0, microsecond=0)
     
@@ -773,7 +865,7 @@ async def health_check_loop():
             await perform_health_check()
             
             # Calculate next target (always next hour :00)
-            now = datetime.utcnow()
+            now = utcnow()
             next_check_time = (now + timedelta(hours=1)).replace(minute=0, second=0, microsecond=0)
             
             delay_seconds = (next_check_time - now).total_seconds()
@@ -808,7 +900,10 @@ from datetime import datetime
 async def create_tournament(guild_id: int, request: Request):
     user = request.session.get("user")
     if not user: return JSONResponse(status_code=401, content={"error": "Login required"})
-    
+
+    if not await user_can_manage(guild_id, request):
+        return JSONResponse(status_code=403, content={"error": "No tienes permisos para gestionar este servidor."})
+
     active = await DBManager.get_active_tournament(guild_id)
     if active: return JSONResponse(status_code=409, content={"error": "Ya hay un torneo activo"})
 
@@ -819,10 +914,28 @@ async def create_tournament(guild_id: int, request: Request):
     name = data.get("name")
     if not name: return JSONResponse(status_code=400, content={"error": "Name required"})
 
+    description = data.get("description", "") or ""
+    if len(name) > MAX_TOURNEY_NAME_LEN:
+        return JSONResponse(status_code=400, content={"error": f"El nombre no puede superar los {MAX_TOURNEY_NAME_LEN} caracteres."})
+    if len(description) > MAX_TOURNEY_DESC_LEN:
+        return JSONResponse(status_code=400, content={"error": f"La descripción no puede superar los {MAX_TOURNEY_DESC_LEN} caracteres."})
+
     try: max_teams = int(data.get("max_teams", 16))
     except: max_teams = 16
-    
-    date_str = data.get("date", datetime.utcnow().strftime("%Y-%m-%d"))
+
+    # Validación coherente con el comando del bot: múltiplo de 2 y rango 2-64
+    if max_teams < 2 or max_teams > 64 or max_teams % 2 != 0:
+        return JSONResponse(status_code=400, content={"error": "El máximo de equipos debe ser un múltiplo de 2 entre 2 y 64."})
+
+    try:
+        min_members = int(data.get("min_members", 1))
+        max_members = int(data.get("max_members", 5))
+    except (ValueError, TypeError):
+        return JSONResponse(status_code=400, content={"error": "Los miembros mínimo y máximo deben ser números enteros."})
+    if min_members < 1 or max_members < 1 or min_members > max_members:
+        return JSONResponse(status_code=400, content={"error": "Rango de miembros inválido (min >= 1 y min <= max)."})
+
+    date_str = data.get("date", utcnow().strftime("%Y-%m-%d"))
     reg_start = data.get("reg_start", "00:00")
     reg_end = data.get("reg_end", "23:59")
     start_time = data.get("start_time", "18:00")
@@ -839,16 +952,16 @@ async def create_tournament(guild_id: int, request: Request):
         "status": "open",
         "current_round": 0,
         "matches": [], 
-        "created_at": datetime.utcnow(),
+        "created_at": utcnow(),
         "date": date_str,
         "registration_start_time": reg_start,
         "registration_end_time": reg_end,
         "start_time": start_time,
         "start_date": full_start_date,
         "max_teams": max_teams,
-        "min_members": int(data.get("min_members", 1)),
-        "max_members": int(data.get("max_members", 5)),
-        "description": data.get("description", ""),
+        "min_members": min_members,
+        "max_members": max_members,
+        "description": description,
         "winner_id": None,
         "last_bracket_url": None
     }
@@ -910,7 +1023,13 @@ async def update_tournament(guild_id: int, tournament_id: str, request: Request)
     if not can_manage: return JSONResponse(status_code=403, content={"error": "Forbidden"})
 
     data = await request.json()
-    
+
+    # Validación de longitudes (coherente con la creación y con el bot)
+    if "name" in data and len(data["name"] or "") > MAX_TOURNEY_NAME_LEN:
+        return JSONResponse(status_code=400, content={"error": f"El nombre no puede superar los {MAX_TOURNEY_NAME_LEN} caracteres."})
+    if "description" in data and len(data["description"] or "") > MAX_TOURNEY_DESC_LEN:
+        return JSONResponse(status_code=400, content={"error": f"La descripción no puede superar los {MAX_TOURNEY_DESC_LEN} caracteres."})
+
     # Fields to update
     update_data = {}
     if "name" in data: update_data["name"] = data["name"]
@@ -927,6 +1046,8 @@ async def update_tournament(guild_id: int, tournament_id: str, request: Request)
     
     # Re-calc full start string if needed
     current_t = await DBManager.get_tournament(tournament_id)
+    if not current_t:
+        return JSONResponse(status_code=404, content={"error": "Torneo no encontrado"})
     d = update_data.get("date", current_t.get("date", ""))
     t = update_data.get("start_time", current_t.get("start_time", ""))
     if d and t:
@@ -1077,6 +1198,14 @@ async def delete_tournament(guild_id: int, tournament_id: str, request: Request)
     user = request.session.get("user")
     if not user: return JSONResponse(status_code=401, content={"error": "Login required"})
 
+    if not await user_can_manage(guild_id, request):
+        return JSONResponse(status_code=403, content={"error": "No tienes permisos para gestionar este servidor."})
+
+    # No decrementar el contador si el torneo no existía
+    existing = await DBManager.get_tournament(tournament_id)
+    if not existing:
+        return JSONResponse(status_code=404, content={"error": "Torneo no encontrado"})
+
     await DBManager.delete_tournament(tournament_id)
     await DBManager.decrement_tournaments()
     await DBManager.delete_teams_by_tournament(tournament_id)
@@ -1130,9 +1259,10 @@ async def delete_team_api(guild_id: int, team_id: str, request: Request):
 async def get_blacklist_api(guild_id: int, request: Request):
     user = request.session.get("user")
     if not user: return JSONResponse(status_code=401, content={"error": "Login required"})
-    
-    # We should ideally check permissions, but for GET it might be okay.
-    # To be safe, we check if they are in the guild.
+
+    if not await user_can_manage(guild_id, request):
+        return JSONResponse(status_code=403, content={"error": "No tienes permisos para gestionar este servidor."})
+
     bl = await DBManager.get_blacklist(guild_id)
     
     # Resolve names from Discord API if needed, or return as is.
@@ -1155,28 +1285,35 @@ async def get_blacklist_api(guild_id: int, request: Request):
 async def add_blacklist_api(guild_id: int, request: Request):
     user = request.session.get("user")
     if not user: return JSONResponse(status_code=401, content={"error": "Login required"})
-    
-    # Reuse simple permission logic or implement can_manage here.
-    # For brevity, assuming user has permissions if they reach this.
-    # (In a real app, strict permission check like in delete_team_api is required).
-    
+
+    if not await user_can_manage(guild_id, request):
+        return JSONResponse(status_code=403, content={"error": "No tienes permisos para gestionar este servidor."})
+
     data = await request.json()
     user_id = data.get("user_id")
     reason = data.get("reason", "Sin especificar")
-    
+
     if not user_id: return JSONResponse(status_code=400, content={"error": "Missing user_id"})
-    
+
+    try:
+        user_id_int = int(user_id)
+    except (ValueError, TypeError):
+        return JSONResponse(status_code=400, content={"error": "user_id inválido"})
+
     import datetime
     date_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
-    
-    await DBManager.add_to_blacklist(guild_id, int(user_id), reason, int(user['id']), date_str)
+
+    await DBManager.add_to_blacklist(guild_id, user_id_int, reason, int(user['id']), date_str)
     return JSONResponse(content={"status": "added"})
 
 @app.post("/api/guild/{guild_id}/blacklist/remove")
 async def remove_blacklist_api(guild_id: int, request: Request):
     user = request.session.get("user")
     if not user: return JSONResponse(status_code=401, content={"error": "Login required"})
-    
+
+    if not await user_can_manage(guild_id, request):
+        return JSONResponse(status_code=403, content={"error": "No tienes permisos para gestionar este servidor."})
+
     try:
         data = await request.json()
         user_id = data.get("user_id")

@@ -92,8 +92,8 @@ try {
             <div class="dashboard-header">
                 <div style="display:flex; align-items:center; gap:15px;">
                     <a href="/dashboard" class="back-btn" style="margin-bottom: 0; text-decoration: none;"><i class="fas fa-arrow-left"></i> Volver al Dashboard</a>
-                    <img src="${guild.icon || "https://cdn.discordapp.com/embed/avatars/0.png"}" style="width:48px; height:48px; border-radius:50%;">
-                    <h1>${guild.name}</h1>
+                    <img src="${encodeURI(guild.icon || "https://cdn.discordapp.com/embed/avatars/0.png")}" style="width:48px; height:48px; border-radius:50%;">
+                    <h1>${escapeHtml(guild.name)}</h1>
                     ${isLoggedIn ? `
                         <div style="display:flex; align-items:center; gap:10px;">
                             <span class="badge ${badgeClass}">${roleLabel}</span>
@@ -159,6 +159,7 @@ try {
         guildChannels,
         config.tourney_log_channel_id,
     );
+    fillSelect("cfg-playing", guildRoles, config.playing_role_id);
 
     document.getElementById("cfg-prefix").value = config.prefix || ",";
     document.getElementById("cfg-logs-enabled").checked =
@@ -248,7 +249,7 @@ else if (t.status === "finished") badgeColor = "#ed4245";
 
 const winnerHtml = t.winner_name
     ? `<div class="badge" style="background:#ffd700; color:black; font-size:1em; display:flex; align-items:center; gap:6px; box-shadow:0 2px 4px rgba(0,0,0,0.5);">
-            <i class="fas fa-crown"></i> ${t.winner_name}
+            <i class="fas fa-crown"></i> ${escapeHtml(t.winner_name)}
             </div>`
     : "";
 
@@ -277,9 +278,9 @@ return `
                         ${dateDisplay}
                     </div>
                 </div>
-                <h1 style="font-size:2.5rem; margin-bottom:12px; font-weight:800; text-shadow:0 2px 10px rgba(0,0,0,0.5); line-height:1.1;">${t.name}</h1>
+                <h1 style="font-size:2.5rem; margin-bottom:12px; font-weight:800; text-shadow:0 2px 10px rgba(0,0,0,0.5); line-height:1.1;">${escapeHtml(t.name)}</h1>
                 <p style="color:rgba(255,255,255,0.9); font-size:0.95em; max-width:100%; margin-bottom:16px; line-height:1.5; white-space:normal; overflow-wrap:break-word;">
-                    ${t.description || "Sin descripción"}
+                    ${escapeHtml(t.description || "Sin descripción")}
                 </p>
                 <div class="hero-footer">
                     <div style="display:flex; gap:16px; font-size:1em; color:rgba(255,255,255,0.9); font-weight:bold; text-shadow:0 1px 2px rgba(0,0,0,0.8);">
@@ -334,7 +335,7 @@ if (data.history && data.history.length > 0) {
 
         const winnerHtml = t.winner_name
         ? `<div class="badge" style="background:#ffd700; color:black; font-size:1em; display:flex; align-items:center; gap:6px;">
-                    <i class="fas fa-crown"></i> ${t.winner_name}
+                    <i class="fas fa-crown"></i> ${escapeHtml(t.winner_name)}
                     </div>`
         : "";
 
@@ -362,9 +363,9 @@ if (data.history && data.history.length > 0) {
                                 ${dateDisplayH}
                             </div>
                         </div>
-                        <h1 style="font-size:2.5rem; margin-bottom:12px; font-weight:800; text-shadow:0 2px 10px rgba(0,0,0,0.5); line-height:1.1;">${t.name}</h1>
+                        <h1 style="font-size:2.5rem; margin-bottom:12px; font-weight:800; text-shadow:0 2px 10px rgba(0,0,0,0.5); line-height:1.1;">${escapeHtml(t.name)}</h1>
                         <p style="color:rgba(255,255,255,0.9); font-size:0.95em; max-width:100%; margin-bottom:16px; line-height:1.5; white-space:normal; overflow-wrap:break-word;">
-                            ${t.description || "Sin descripción"}
+                            ${escapeHtml(t.description || "Sin descripción")}
                         </p>
                         <div class="hero-footer">
                             <div style="display:flex; gap:16px; font-size:1em; color:rgba(255,255,255,0.9); font-weight:bold; text-shadow:0 1px 2px rgba(0,0,0,0.8);">
@@ -495,6 +496,25 @@ return `
                     </div>
                 </div>
 
+                <!-- Sección: Rol de Participante -->
+                <div style="margin-bottom: 32px;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--border);">
+                        <div style="width: 32px; height: 32px; background: rgba(88, 101, 242, 0.15); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-gamepad" style="color: var(--accent); font-size: 14px;"></i>
+                        </div>
+                        <h3 style="margin: 0; font-size: 1.1rem; color: var(--text-header);">Rol de Participante</h3>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label class="form-label" style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+                            <i class="fas fa-user-tag" style="color: var(--text-muted); font-size: 12px;"></i> Rol que se asigna a los inscritos
+                        </label>
+                        <select id="cfg-playing" class="form-select"><option>Cargando...</option></select>
+                        <small style="color: var(--text-muted); display: flex; align-items: center; gap: 6px; margin-top: 8px;">
+                            <i class="fas fa-info-circle"></i> Se asigna al inscribirse en un torneo, se menciona al publicar los brackets y se retira al finalizar.
+                        </small>
+                    </div>
+                </div>
+
                 <!-- Sección: Roles Admin -->
                 <div style="margin-bottom: 32px;">
                     <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--border);">
@@ -544,11 +564,11 @@ if (roleIds.length === 0) {
         return `
                     <span class="role-tag">
                         <span class="role-color" style="background-color: ${colorHex};"></span>
-                        ${role.name}
+                        ${escapeHtml(role.name)}
                     </span>
                 `;
         } else {
-        return `<span class="role-tag" style="opacity:0.5;">ID: ${roleId}</span>`;
+        return `<span class="role-tag" style="opacity:0.5;">ID: ${escapeHtml(roleId)}</span>`;
         }
     })
     .join("");
@@ -1065,8 +1085,6 @@ try {
 async function saveConfig(e) {
 e.preventDefault();
 
-const rolesStr = document.getElementById("cfg-roles").value;
-const roles = rolesStr
 const payload = {
     category_id: document.getElementById('cfg-category').value,
     bracket_channel_id: document.getElementById('cfg-bracket').value,
@@ -1075,6 +1093,7 @@ const payload = {
     prefix: document.getElementById('cfg-prefix').value,
     tourney_log_channel_id: document.getElementById('cfg-logs').value,
     tourney_logs_enabled: document.getElementById('cfg-logs-enabled').checked,
+    playing_role_id: document.getElementById('cfg-playing') ? document.getElementById('cfg-playing').value : undefined,
     admin_roles: document.getElementById('cfg-roles') ? document.getElementById('cfg-roles').value.split(',').map(r => r.trim()).filter(r => r) : undefined,
     bot_nickname: document.getElementById('cfg-bot-nick').value
 };
@@ -1126,11 +1145,11 @@ async function loadBlacklist() {
             data.blacklist.forEach(b => {
                 html += `
                     <tr>
-                        <td><strong>${b.user_name}</strong> <br><small style="color:var(--text-muted);">${b.user_id}</small></td>
-                        <td>${b.reason}</td>
-                        <td>${b.date}</td>
+                        <td><strong>${escapeHtml(b.user_name)}</strong> <br><small style="color:var(--text-muted);">${escapeHtml(b.user_id)}</small></td>
+                        <td>${escapeHtml(b.reason)}</td>
+                        <td>${escapeHtml(b.date)}</td>
                         <td>
-                            <button onclick="removeBlacklistUser('${b.user_id}')" class="btn-modern danger"><i class="fas fa-trash"></i></button>
+                            <button onclick="removeBlacklistUser('${escapeHtml(b.user_id)}')" class="btn-modern danger"><i class="fas fa-trash"></i></button>
                         </td>
                     </tr>
                 `;

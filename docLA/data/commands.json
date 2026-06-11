@@ -1,13 +1,18 @@
 {
   "Miembros": [
     {
+      "name": "tourney",
+      "desc": "Muestra la información del bot y un enlace a la documentación.",
+      "usage": ",tourney"
+    },
+    {
       "name": "tourney help",
-      "desc": "Muestra la ayuda de comandos paginada.",
+      "desc": "Muestra la ayuda de comandos paginada (usuario y admin).",
       "usage": ",tourney help"
     },
     {
       "name": "tourney register",
-      "desc": "Registra un equipo en el torneo activo.",
+      "desc": "Registra un equipo en el torneo activo. Los miembros invitados deben confirmar por MD.",
       "usage": ",tourney register <nombre_equipo> <@miembros...(lider no)>"
     },
     {
@@ -56,9 +61,14 @@
     },
     {
       "name": "tourney team",
-      "desc": "Muestra información detallada de un equipo.",
+      "desc": "Muestra información detallada de un equipo (el tuyo, por mención o por ID).",
       "usage": ",tourney team [@miembro / id_equipo]",
       "subcommands": [
+        {
+          "name": "",
+          "desc": "Muestra información de tu propio equipo en el torneo activo.",
+          "usage": ",tourney team"
+        },
         {
           "name": "[@miembro / id_equipo]",
           "desc": "Muestra información detallada del equipo específico.",
@@ -68,7 +78,7 @@
     },
     {
       "name": "tourney historial",
-      "desc": "Muestra torneos pasados.",
+      "desc": "Muestra los torneos pasados del servidor (paginado).",
       "usage": ",tourney historial"
     },
     {
@@ -84,23 +94,23 @@
     {
       "name": "tourney bug",
       "desc": "Reporta un bug a los desarrolladores.",
-      "usage": ",tourney bug [descripción]"
+      "usage": ",tourney bug <descripción>"
     },
     {
       "name": "tourney suggest",
       "desc": "Envía una sugerencia a los desarrolladores.",
-      "usage": ",tourney suggest [sugerencia]"
+      "usage": ",tourney suggest <sugerencia>"
     },
     {
       "name": "tourney ping",
-      "desc": "Muestra la salud del bot.",
+      "desc": "Muestra el estado y la latencia del bot (heartbeat).",
       "usage": ",tourney ping"
     }
   ],
   "Encargados": [
     {
       "name": "tourney create",
-      "desc": "Crea un nuevo torneo. Permite adjuntar una imagen.",
+      "desc": "Crea un nuevo torneo. Puedes adjuntar una imagen como banner.",
       "usage": ",tourney create Nombre | Desc | Fecha | IniInsc | FinInsc | IniTorneo | MaxTeams | MinMiem | MaxMiem"
     },
     {
@@ -115,27 +125,28 @@
     },
     {
       "name": "tourney start",
-      "desc": "Inicia el torneo y genera brackets.",
-      "usage": ",tourney start"
+      "desc": "Inicia el torneo, genera el bracket y crea los canales de enfrentamiento.",
+      "usage": ",tourney start [id_torneo]"
     },
     {
       "name": "tourney delete",
-      "desc": "Elimina un torneo permanentemente.",
-      "usage": ",tourney delete [id_torneo]"
+      "desc": "Elimina un torneo permanentemente de la base de datos.",
+      "usage": ",tourney delete <id_torneo>"
     },
     {
       "name": "tourney kick",
-      "desc": "Expulsa un equipo del torneo activo.",
-      "usage": ",tourney kick [id_equipo / @miembro]"
+      "desc": "Expulsa un equipo del torneo activo (por ID de equipo o mención de un miembro).",
+      "usage": ",tourney kick <id_equipo / @miembro>"
     },
     {
       "name": "tourney set winner",
-      "desc": "Define el ganador de una partida manualmente.",
-      "usage": ",tourney set winner [@miembro]"
+      "desc": "Define el ganador de un enfrentamiento mencionando a un integrante del equipo.",
+      "usage": ",tourney set winner <@miembro>"
     },
     {
       "name": "tourney blacklist",
-      "desc": "Gestiona la blacklist de jugadores.",
+      "desc": "Gestiona la blacklist de jugadores del torneo.",
+      "aliases": ["bl"],
       "usage": ",tourney blacklist [add/remove] <@usuario> [motivo]",
       "subcommands": [
         {
@@ -162,42 +173,47 @@
     },
     {
       "name": "tourney set category",
-      "desc": "Configura la categoría para canales de torneo.",
-      "usage": ",tourney set category [id_categoría]"
+      "desc": "Configura la categoría donde se crean los canales de enfrentamiento.",
+      "usage": ",tourney set category <id_categoría>"
     },
     {
       "name": "tourney set bracket",
-      "desc": "Configura el canal de brackets.",
-      "usage": ",tourney set bracket [id_canal]"
+      "desc": "Configura el canal donde se publica el bracket.",
+      "usage": ",tourney set bracket <id_canal>"
     },
     {
       "name": "tourney set lobby",
-      "desc": "Configura el canal de lobby.",
-      "usage": ",tourney set lobby [id_canal]"
+      "desc": "Configura el canal de lobby (donde se permiten los comandos de inscripción).",
+      "usage": ",tourney set lobby <id_canal>"
     },
     {
       "name": "tourney set bot_admin",
-      "desc": "Configura el canal de admin del bot.",
-      "usage": ",tourney set bot_admin [id_canal]"
+      "desc": "Configura el canal de administración del bot.",
+      "usage": ",tourney set bot_admin <id_canal>"
+    },
+    {
+      "name": "tourney set playing",
+      "desc": "Configura el rol de participante: se asigna al inscribirse en un torneo y se menciona al publicar los brackets. Se retira al finalizar el torneo.",
+      "usage": ",tourney set playing <@rol>"
     },
     {
       "name": "tourney set prefix",
-      "desc": "Configura el prefijo del bot para el servidor.",
-      "usage": ",tourney set prefix [nuevo_prefijo]"
+      "desc": "Cambia el prefijo del bot para el servidor (máx. 5 caracteres).",
+      "usage": ",tourney set prefix <nuevo_prefijo>"
     },
     {
       "name": "tourney set logs",
-      "desc": "Configura o alterna el canal de logs.",
+      "desc": "Configura o alterna (ON/OFF) el canal de logs del torneo.",
       "usage": ",tourney set logs [id_canal]",
       "subcommands": [
         {
           "name": "",
-          "desc": "Habilita y deshabilita los logs.",
+          "desc": "Alterna los logs entre ON y OFF (requiere un canal ya configurado).",
           "usage": ",tourney set logs"
         },
         {
           "name": "[id_canal]",
-          "desc": " Configura el canal de logs.",
+          "desc": "Establece el canal de logs y activa los logs.",
           "usage": ",tourney set logs [id_canal]"
         }
       ]
@@ -206,7 +222,7 @@
   "Admin": [
     {
       "name": "tourney roles",
-      "desc": "Gestiona roles permitidos para ser Encargado.",
+      "desc": "Gestiona los roles permitidos para actuar como Encargado/Organizador.",
       "usage": ",tourney roles [add/remove] <@rol>",
       "subcommands": [
         {
@@ -230,17 +246,18 @@
   "Owner": [
     {
       "name": "leaveserver",
-      "desc": "El bot abandona el servidor.",
+      "desc": "Hace que el bot abandone el servidor indicado.",
       "usage": ",leaveserver <id_servidor>"
     },
     {
       "name": "isinserver",
-      "desc": "Dice si el bot está en el servidor.",
+      "desc": "Indica si el bot está en el servidor indicado y muestra información.",
       "usage": ",isinserver <id_servidor>"
     },
     {
       "name": "servers",
-      "desc": "Lista los servidores en los que está el bot.",
+      "desc": "Lista los servidores en los que está el bot, con enlaces de invitación.",
+      "aliases": ["serverlist"],
       "usage": ",servers"
     }
   ]

@@ -4,6 +4,7 @@ import uuid
 import datetime
 import random
 import io
+import aiohttp
 from utils.db import DBManager, Tournament, Match
 from utils.visual import generate_bracket_image
 from config import PREFIX, BUG_CHANNEL, SUGGESTION_CHANNEL 
@@ -13,6 +14,11 @@ try:
 except ImportError:
     BOT_LINK = None
     DOC_URL = None
+
+# Límites de longitud de entrada (compartidos con la web). Evitan errores de embed en Discord.
+MAX_TOURNEY_NAME_LEN = 100
+MAX_TOURNEY_DESC_LEN = 1000
+MAX_TEAM_NAME_LEN = 50
 
 
 class Tourney(commands.Cog):
@@ -114,9 +120,9 @@ class Tourney(commands.Cog):
         
         try:
             await channel.send(embed=embed)
-        except:
-            pass
-    
+        except Exception as e:
+            print(f"[send_log] No se pudo enviar el log al canal {log_channel_id}: {e}")
+
     async def is_admin(self, ctx):
         """
         Se encarga de verificar si el usuario tiene permisos de administrador o si tiene un rol permitido.
@@ -207,9 +213,10 @@ class Tourney(commands.Cog):
             latency = hb.get("latency", 0)
             last_seen = hb.get("last_seen")
             if last_seen:
+                # Asegurar aware-UTC (los docs legados podrían venir naïve)
                 if last_seen.tzinfo is None:
-                    last_seen = last_seen.replace(tzinfo=None)
-                diff = (datetime.datetime.utcnow() - last_seen).total_seconds()
+                    last_seen = last_seen.replace(tzinfo=datetime.timezone.utc)
+                diff = (datetime.datetime.now(datetime.timezone.utc) - last_seen).total_seconds()
                 if diff < 90:
                     status = "Online"
         
@@ -276,6 +283,14 @@ class Tourney(commands.Cog):
                 "source": "Discord"
             }
             await DBManager.create_suggestion_report(report_data)
+
+            # Entrega inmediata al canal de sugerencias (sin esperar al loop)
+            reports_cog = self.bot.get_cog("Reports")
+            if reports_cog:
+                try:
+                    await reports_cog.deliver_reports()
+                except Exception as e:
+                    print(f"[Reports] Error en entrega inmediata de sugerencia: {e}")
 
             await ctx.send(embed=self.get_embed("Sugerencia Recibida", "Tu sugerencia ha sido guardada y será revisada por los desarrolladores.", discord.Color.green(), author=ctx.author))
             
@@ -398,6 +413,17 @@ class Tourney(commands.Cog):
             await ctx.send(embed=self.get_embed("Error", "El número máximo de equipos es 64 y el mínimo es 2.", discord.Color.red(), author=ctx.author))
             return
 
+        # Límites de longitud (los embeds de Discord tienen tope: título 256, descripción 4096)
+        if len(name) > MAX_TOURNEY_NAME_LEN:
+            await ctx.send(embed=self.get_embed("Error", f"El nombre del torneo no puede superar los {MAX_TOURNEY_NAME_LEN} caracteres.", discord.Color.red(), author=ctx.author))
+            return
+        if len(desc) > MAX_TOURNEY_DESC_LEN:
+            await ctx.send(embed=self.get_embed("Error", f"La descripción no puede superar los {MAX_TOURNEY_DESC_LEN} caracteres.", discord.Color.red(), author=ctx.author))
+            return
+        if min_members > max_members:
+            await ctx.send(embed=self.get_embed("Error", "El mínimo de miembros no puede ser mayor que el máximo.", discord.Color.red(), author=ctx.author))
+            return
+
         image_url = None
         if ctx.message.attachments:
             image_url = ctx.message.attachments[0].url
@@ -418,7 +444,7 @@ class Tourney(commands.Cog):
             "status": "open",
             "current_round": 0,
             "matches": [],
-            "created_at": datetime.datetime.utcnow(),
+            "created_at": datetime.datetime.now(datetime.timezone.utc),
             "description": desc,
             "date": date_str,
             "registration_start_time": reg_start,
@@ -632,6 +658,18 @@ class Tourney(commands.Cog):
              await ctx.send(embed=self.get_embed("Error", "Se necesitan al menos 2 equipos para iniciar.", discord.Color.red(), author=ctx.author))
              return
 
+        # Avisar (sin bloquear) si no hay categoría configurada: sin ella no se crearán
+        # los canales de enfrentamiento y los participantes no recibirán su sala.
+        start_config = await DBManager.get_guild_config(ctx.guild.id)
+        if not (start_config and start_config.get('category_id')):
+            await ctx.send(embed=self.get_embed(
+                "Aviso: Sin categoría configurada",
+                f"No hay una **categoría** configurada para los partidos. El bracket se publicará, "
+                f"pero **no se crearán canales de enfrentamiento**.\n"
+                f"Configúrala con `{PREFIX}tourney set category <id>` antes de iniciar.",
+                discord.Color.gold(), author=ctx.author
+            ))
+
         capacity = tourney.get('max_teams', 16)
         num_matches = capacity // 2
         matches = [None] * num_matches
@@ -725,8 +763,8 @@ class Tourney(commands.Cog):
                     async with session.get(url) as resp:
                         if resp.status == 200:
                             return await resp.read()
-            except:
-                pass
+            except Exception as e:
+                print(f"[Bracket] No se pudo descargar la imagen '{url}': {e}")
             return None
 
         server_icon_bytes = None
@@ -990,8 +1028,8 @@ class Tourney(commands.Cog):
             if winners[0] == "BYE_SLOT":
                  await ctx.send(embed=self.get_embed("Torneo Finalizado", "El torneo ha finalizado sin ganador real (Rama vacía).", author=ctx.author))
                  tourney['status'] = "finished"
-                 await DBManager.update_tournament(tourney['id'], {"status": "Terminado"})
-                 return 
+                 await DBManager.update_tournament(tourney['id'], {"status": "finished"})
+                 return
 
             server_name = ctx.guild.name
             
@@ -1418,6 +1456,10 @@ class Tourney(commands.Cog):
              await ctx.send(embed=self.get_embed("Error de Formato", f"Parece que has introducido una mención como nombre de equipo.\nUso correcto: `{PREFIX}tourney register <NombreEquipo> <@Miembros...>`", discord.Color.red(), author=ctx.author))
              return
 
+        if len(name) > MAX_TEAM_NAME_LEN:
+             await ctx.send(embed=self.get_embed("Error", f"El nombre del equipo no puede superar los {MAX_TEAM_NAME_LEN} caracteres.", discord.Color.red(), author=ctx.author))
+             return
+
         if active_tourney['status'] != "open":
              await ctx.send(embed=self.get_embed("Error", "El torneo no está abierto para registros.", discord.Color.red(), author=ctx.author))
              return
@@ -1825,6 +1867,14 @@ class Tourney(commands.Cog):
                 "source": "Discord"
             }
             await DBManager.create_bug_report(report_data)
+
+            # Entrega inmediata al canal de bugs (sin esperar al loop)
+            reports_cog = self.bot.get_cog("Reports")
+            if reports_cog:
+                try:
+                    await reports_cog.deliver_reports()
+                except Exception as e:
+                    print(f"[Reports] Error en entrega inmediata de bug: {e}")
 
             confirm_msg = await ctx.send(embed=self.get_embed("Bug Reportado", "Tu reporte ha sido guardado. ¡Gracias por ayudar a mejorar el bot!", discord.Color.green(), author=ctx.author))
             

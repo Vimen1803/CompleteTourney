@@ -102,11 +102,11 @@
                           </h3>
                           <div class="form-group">
                             <label class="form-label">Nombre del Torneo</label>
-                            <input type="text" id="new-t-name" class="form-input" placeholder="Ej. Copa Verano 2026" required oninput="updatePreview('new')"/>
+                            <input type="text" id="new-t-name" class="form-input" placeholder="Ej. Copa Verano 2026" maxlength="100" required oninput="updatePreview('new')"/>
                           </div>
                           <div class="form-group">
                             <label class="form-label">Descripción</label>
-                            <input type="text" id="new-t-desc" class="form-input" placeholder="Breve descripción del evento..." required oninput="updatePreview('new')"/>
+                            <input type="text" id="new-t-desc" class="form-input" placeholder="Breve descripción del evento..." maxlength="1000" required oninput="updatePreview('new')"/>
                           </div>
                       </div>
     
@@ -258,11 +258,11 @@
                           </h3>
                           <div class="form-group">
                             <label class="form-label">Nombre del Torneo</label>
-                            <input type="text" id="edit-t-name" class="form-input" required oninput="updatePreview('edit')"/>
+                            <input type="text" id="edit-t-name" class="form-input" maxlength="100" required oninput="updatePreview('edit')"/>
                           </div>
                           <div class="form-group">
                             <label class="form-label">Descripción</label>
-                            <input type="text" id="edit-t-desc" class="form-input" required oninput="updatePreview('edit')"/>
+                            <input type="text" id="edit-t-desc" class="form-input" maxlength="1000" required oninput="updatePreview('edit')"/>
                           </div>
                           <div class="form-group" id="edit-t-status-group" style="display:none;">
                             <label class="form-label">Estado del Torneo</label>

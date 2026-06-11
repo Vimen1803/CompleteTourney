@@ -153,9 +153,9 @@ async function loadTournament(force = false) {
             ? `background-image: url('${t.last_bracket_url}'); background-repeat: no-repeat; background-position: center; background-size: contain;` 
             : `background: var(--bg-secondary);`;
 
-        const winnerHtml = t.winner_name ? 
+        const winnerHtml = t.winner_name ?
             `<div style="padding: 4px 10px; border-radius: 4px; font-size: 0.8em; font-weight: bold; text-transform: uppercase; background:#ffd700; color:black; display:flex; align-items:center; gap:6px; box-shadow:0 2px 4px rgba(0,0,0,0.5);">
-                <i class="fas fa-crown"></i> ${t.winner_name}
+                <i class="fas fa-crown"></i> ${escapeHtml(t.winner_name)}
                 </div>` : '';
 
         // Determine Tab Visibility
@@ -210,8 +210,8 @@ async function loadTournament(force = false) {
                             </div>
                         </div>
 
-                        <div class="hero-title">${t.name}</div>
-                        <div class="hero-description">${t.description || 'Sin descripción'}</div>
+                        <div class="hero-title">${escapeHtml(t.name)}</div>
+                        <div class="hero-description">${escapeHtml(t.description || 'Sin descripción')}</div>
 
                         <div class="hero-footer">
                             <div style="display:flex; gap:20px; color:rgba(255,255,255,0.8); font-weight:500;">
@@ -238,9 +238,9 @@ async function loadTournament(force = false) {
                                 : teams.map(tm => {
                                     const membersHtml = (tm.resolved_members || []).map(m => `
                                         <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-                                            ${m.is_leader ? '<i class="fas fa-crown" style="color:#ffd700; font-size:0.8em;"></i>' : '<div style="width:14px;"></div>'} 
-                                            <img src="${m.avatar}" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover; background:var(--bg-tertiary);" alt="Avatar">
-                                            <span style="font-size: 0.9em; ${m.is_leader ? 'font-weight:bold; color:white;' : 'color:var(--text-normal);'}">${m.name}</span>
+                                            ${m.is_leader ? '<i class="fas fa-crown" style="color:#ffd700; font-size:0.8em;"></i>' : '<div style="width:14px;"></div>'}
+                                            <img src="${encodeURI(m.avatar || '')}" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover; background:var(--bg-tertiary);" alt="Avatar">
+                                            <span style="font-size: 0.9em; ${m.is_leader ? 'font-weight:bold; color:white;' : 'color:var(--text-normal);'}">${escapeHtml(m.name)}</span>
                                         </div>
                                     `).join('');
 
@@ -256,7 +256,7 @@ async function loadTournament(force = false) {
                                     return `
                                     <div class="team-item" style="height: calc(30 + ${t.max_members * 50}px); position: relative;">
                                         <div class="team-name" style="padding-bottom:5px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; gap:8px; min-width:0;">
-                                            <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0;">${tm.name}</span>
+                                            <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0;">${escapeHtml(tm.name)}</span>
                                             <span style="font-size:0.75em; background:var(--bg-secondary); padding:2px 8px; border-radius:12px; flex-shrink:0;">${tm.resolved_members.length}</span>
                                         </div>
                                         <div style="display:flex; flex-direction:column; gap:10px;">

@@ -1,3 +1,3 @@
 User-agent: *
 Allow: /
-Sitemap: https://tourneydoc.victormenjon.es/sitemap.xml
+Sitemap: https://complete-tourney.vercel.app/sitemap.xml

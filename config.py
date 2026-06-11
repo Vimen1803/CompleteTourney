@@ -20,15 +20,30 @@ PREFIX: str = os.getenv("PREFIX")
 BOT_LINK: str = os.getenv("BOT_LINK")
 
 #CANALES
-ERROR_CHANNEL: int = int(os.getenv("ERROR_CHANNEL"))
-LOG_CHANNEL: int = int(os.getenv("LOG_CHANNEL"))
-BUG_CHANNEL: int = int(os.getenv("BUG_CHANNEL"))
-SERVER_LOG_CHANNEL: int = int(os.getenv("SERVER_LOG_CHANNEL"))
-SUGGESTION_CHANNEL: int = int(os.getenv("SUGGESTION_CHANNEL"))
+def _int_env(name: str, default: int = 0) -> int:
+    """Lee una variable de entorno como entero sin reventar el arranque si falta o es inválida."""
+    raw = os.getenv(name)
+    if raw is None or str(raw).strip() == "":
+        print(f"[config] Aviso: la variable de entorno '{name}' no está definida; se usa {default}.")
+        return default
+    try:
+        return int(raw)
+    except ValueError:
+        print(f"[config] Aviso: '{name}'='{raw}' no es un entero válido; se usa {default}.")
+        return default
+
+ERROR_CHANNEL: int = _int_env("ERROR_CHANNEL")
+LOG_CHANNEL: int = _int_env("LOG_CHANNEL")
+BUG_CHANNEL: int = _int_env("BUG_CHANNEL")
+SERVER_LOG_CHANNEL: int = _int_env("SERVER_LOG_CHANNEL")
+SUGGESTION_CHANNEL: int = _int_env("SUGGESTION_CHANNEL")
 
 
 #DOCUMENTACION
 DOC_URL: str = os.getenv("DOC_URL")
-OWNER = [int(os.getenv("OWNER"))]
+_owner_id = _int_env("OWNER")
+OWNER = [_owner_id] if _owner_id else []
 
+# (Obsoleto) El loop de reportes ahora corre cada 15s y la entrega desde el bot es inmediata.
+# Se mantiene por compatibilidad; ya no se usa.
 LOOP_TIME: int = 60

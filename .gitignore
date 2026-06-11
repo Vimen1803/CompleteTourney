@@ -38,3 +38,6 @@ configOLD.py
 Thumbs.db
 .vscode
 .vscode/settings.json
+
+# Claude Code / herramientas locales
+.claude/

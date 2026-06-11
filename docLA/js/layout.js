@@ -1,5 +1,18 @@
 // Shared Layout Logic (Sidebar, User Profile)
 
+// Escapa texto controlado por el usuario antes de inyectarlo con innerHTML.
+// Previene XSS almacenado (nombres/descripciones de torneos, equipos, etc.).
+function escapeHtml(value) {
+    if (value === null || value === undefined) return '';
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+window.escapeHtml = escapeHtml;
+
 document.addEventListener('DOMContentLoaded', () => {
     initLayout();
 });

@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands, tasks
-from config import BUG_CHANNEL, SUGGESTION_CHANNEL, LOOP_TIME
+from config import BUG_CHANNEL, SUGGESTION_CHANNEL
 from utils.db import DBManager
 import datetime
 
@@ -12,8 +12,15 @@ class Reports(commands.Cog):
     def cog_unload(self):
         self.report_loop.cancel()
 
-    @tasks.loop(minutes=LOOP_TIME)
+    # Intervalo corto: los reportes creados desde la WEB se entregan casi al instante.
+    # Los creados desde el BOT se entregan inmediatamente vía deliver_reports() (sin esperar al loop).
+    @tasks.loop(seconds=15)
     async def report_loop(self):
+        await self.process_bugs()
+        await self.process_suggestions()
+
+    async def deliver_reports(self):
+        """Procesa y entrega de inmediato los reportes pendientes (bugs y sugerencias)."""
         await self.process_bugs()
         await self.process_suggestions()
 
@@ -35,7 +42,7 @@ class Reports(commands.Cog):
                         title="Nuevo Reporte de Bug",
                         description=bug['description'],
                         color=discord.Color.orange(),
-                        timestamp=bug.get('timestamp', datetime.datetime.utcnow())
+                        timestamp=bug.get('timestamp', datetime.datetime.now(datetime.timezone.utc))
                     )
                     
                     user_info = bug.get('user_name', 'Desconocido')
@@ -77,7 +84,7 @@ class Reports(commands.Cog):
                         title="Nueva Sugerencia",
                         description=sug['description'],
                         color=discord.Color.gold(),
-                        timestamp=sug.get('timestamp', datetime.datetime.utcnow())
+                        timestamp=sug.get('timestamp', datetime.datetime.now(datetime.timezone.utc))
                     )
                     
                     user_info = sug.get('user_name', 'Desconocido')

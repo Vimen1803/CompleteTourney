@@ -2,6 +2,14 @@
 const API_URL = '/api/health'; // Keep existing endpoint
 
 // --- Helper Functions ---
+// El backend envía timestamps UTC en ISO sin sufijo de zona ("2026-06-11T10:00:00").
+// Sin la 'Z', el navegador los interpreta como hora LOCAL. Añadimos la marca UTC.
+function parseUTC(ts) {
+    if (!ts) return new Date(NaN);
+    const hasTz = /[zZ]|[+\-]\d{2}:?\d{2}$/.test(ts);
+    return new Date(hasTz ? ts : ts + 'Z');
+}
+
 function getStatusClass(latency) {
     // Simple logic: > 0 means online for this demo
     if (latency > 0) return 'online';
@@ -77,7 +85,7 @@ async function fetchHealth() {
             // Show up to 24 entries
             data.slice(0, 24).forEach(item => {
                 const itemOnline = item.status === 'online' && item.latency > 0;
-                const date = new Date(item.timestamp);
+                const date = parseUTC(item.timestamp);
                 const day = String(date.getDate()).padStart(2, '0');
                 const month = String(date.getMonth() + 1).padStart(2, '0');
                 const year = date.getFullYear();

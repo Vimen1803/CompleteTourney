@@ -5,8 +5,14 @@ from typing import List, Optional, Dict
 import datetime
 
 # Conexión a MongoDB
-client = motor.motor_asyncio.AsyncIOMotorClient(URL_BASE_1)
+# tz_aware=True: los datetimes leídos de Mongo vuelven como aware (UTC), evitando
+# mezclar naïve/aware al comparar y produciendo ISO con offset para el frontend.
+client = motor.motor_asyncio.AsyncIOMotorClient(URL_BASE_1, tz_aware=True)
 db = client['tourney_bot']
+
+# Helper centralizado para obtener "ahora" en UTC (aware). Reemplaza a utcnow() (deprecado).
+def utcnow():
+    return datetime.datetime.now(datetime.timezone.utc)
 tournaments_collection = db['tournaments']
 teams_collection = db['teams']
 guilds_config_collection = db['guild_config']
@@ -34,7 +40,8 @@ class GuildConfig:
     lobby_channel_id: Optional[int] = None
     bot_admin_channel_id: Optional[int] = None
     tourney_log_channel_id: Optional[int] = None
-    tourney_logs: Optional[bool] = None
+    # Nombre alineado con el usado realmente por bot y web (antes: tourney_logs)
+    tourney_logs_enabled: Optional[bool] = False
     prefix: Optional[str] = None
     admin_roles: List[str] = None
     invite_url: Optional[str] = None
@@ -229,13 +236,6 @@ class DBManager:
         return await tournaments_collection.count_documents({"guild_id": guild_id})
 
     @staticmethod
-    async def count_tournaments(guild_id: int):
-        """
-        Cuenta el número de torneos de un servidor
-        """
-        return await tournaments_collection.count_documents({"guild_id": guild_id})
-
-    @staticmethod
     async def get_guild_config(guild_id: int):
         """
         Obtiene la configuración de un servidor
@@ -267,7 +267,7 @@ class DBManager:
         """
         Crea un reporte de bug
         """
-        data['timestamp'] = datetime.datetime.utcnow()
+        data['timestamp'] = utcnow()
         data['sent_to_discord'] = False
         result = await bugs_collection.insert_one(data)
         return result.inserted_id
@@ -277,7 +277,7 @@ class DBManager:
         """
         Crea un reporte de sugerencia
         """
-        data['timestamp'] = datetime.datetime.utcnow()
+        data['timestamp'] = utcnow()
         data['sent_to_discord'] = False
         result = await suggestions_collection.insert_one(data)
         return result.inserted_id
@@ -319,7 +319,7 @@ class DBManager:
         """
         # data should have timestamp, latency, status
         if 'timestamp' not in data:
-            data['timestamp'] = datetime.datetime.utcnow()
+            data['timestamp'] = utcnow()
         await health_collection.insert_one(data)
 
     @staticmethod
@@ -338,7 +338,7 @@ class DBManager:
         await heartbeat_collection.update_one(
             {"_id": "bot_status"},
             {"$set": {
-                "last_seen": datetime.datetime.utcnow(),
+                "last_seen": utcnow(),
                 "latency": latency
             }},
             upsert=True
@@ -377,7 +377,7 @@ class DBManager:
         update_data = {
             "username": user_data.get("username"),
             "discriminator": user_data.get("discriminator"),
-            "last_login": datetime.datetime.utcnow()
+            "last_login": utcnow()
         }
         
         await users_collection.update_one(
@@ -464,6 +464,11 @@ class DBManager:
         stats = await DBManager.bot_use_collection.find_one({"_id": "stats"})
         if not stats:
             return {"serversOn": 0, "tournamentsDone": 0}
+        # Evitar mostrar contadores negativos (los $inc -1 podrían bajar de 0)
+        if stats.get("serversOn", 0) < 0:
+            stats["serversOn"] = 0
+        if stats.get("tournamentsDone", 0) < 0:
+            stats["tournamentsDone"] = 0
         return stats
 
     # --- Blacklist ---

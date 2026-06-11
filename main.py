@@ -24,8 +24,8 @@ async def get_or_create_invite(guild):
             for inv in invites:
                 if inv.url == stored_invite:
                     return stored_invite
-        except:
-            pass
+        except Exception as e:
+            print(f"[Invite] No se pudieron listar invitaciones de {guild.name}: {e}")
     
     invite_url = None
     try:
@@ -51,8 +51,8 @@ async def on_ready():
     """
     print(f'Logged in as {bot.user} (ID: {bot.user.id})')
     print('------')
-    # Initialize Stats
-    await DBManager.init_bot_stats(1)
+    # Initialize Stats (usar el número real de servidores, no un valor fijo)
+    await DBManager.init_bot_stats(len(bot.guilds))
 
     log_channel = bot.get_channel(LOG_CHANNEL)
     if log_channel:
