@@ -208,9 +208,23 @@ a {
 /* History Grid */
 .history-carousel {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(550px, 1fr));
+    /* min(100%, 520px): en pantallas estrechas el mínimo baja a 100% y no hay scroll horizontal */
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr));
     gap: 24px;
     width: 100%;
+}
+
+/* Cabecera de la pestaña Torneos: título + botón en la misma fila */
+.tournaments-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+}
+.tournaments-header h3 {
+    color: var(--text-header);
 }
 
 .badge {
@@ -467,4 +481,30 @@ a {
 }
 .btn-modern.danger:hover {
     background: #d83c3e;
+}
+
+/* ─── RESPONSIVE (móvil) ─────────────────────── */
+@media (max-width: 768px) {
+    .dashboard-container {
+        padding: 16px;
+    }
+    /* En la cabecera no mostramos el rol del usuario */
+    .server-role-badge {
+        display: none;
+    }
+    /* El botón "Volver" muestra solo la flecha */
+    .back-text {
+        display: none;
+    }
+    .dashboard-header h1 {
+        font-size: 1.4rem;
+    }
+    /* La card del torneo se adapta al ancho de la pantalla */
+    .history-carousel {
+        grid-template-columns: 1fr;
+    }
+    .active-tourney-hero {
+        height: auto;
+        min-height: 320px;
+    }
 }

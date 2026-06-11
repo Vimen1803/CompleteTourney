@@ -44,7 +44,7 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="css/index.css" />
+    <link rel="stylesheet" href="css/index.css?v=2" />
 
     <script type="application/ld+json">
     {
@@ -92,11 +92,20 @@
           <i class="fab fa-discord"></i>
           Invitar al Bot
         </a>
-        <button class="mobile-menu-btn" id="mobileMenuBtn">
+        <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Menú">
           <i class="fas fa-bars"></i>
         </button>
       </div>
     </nav>
+
+    <!-- Mobile Menu Panel -->
+    <div class="mobile-menu" id="mobileMenu">
+      <a href="#features">Características</a>
+      <a href="#why-us">¿Por qué nosotros?</a>
+      <a href="/docs">Documentación</a>
+      <a href="/dashboard"><i class="fas fa-server"></i> Dashboard</a>
+      <a class="mm-cta" href="https://discord.com/oauth2/authorize?client_id=1448450835213189191"><i class="fab fa-discord"></i> Invitar al Bot</a>
+    </div>
 
     <!-- Hero Section -->
     <section class="hero">
@@ -128,7 +137,7 @@
             <h3 id="match-count">999+</h3>
             <p>Torneos</p>
           </div>
-          <div class="stat-item">
+          <div class="stat-item stat-online">
             <h3>24/7</h3>
             <p>Online</p>
           </div>
@@ -347,6 +356,6 @@
       </p>
     </footer>
 
-    <script src="js/index.js"></script>
+    <script src="js/index.js?v=2"></script>
   </body>
 </html>

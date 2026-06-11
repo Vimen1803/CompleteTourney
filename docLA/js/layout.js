@@ -26,11 +26,51 @@ async function initLayout() {
 function setupSidebar() {
     const toggle = document.getElementById('menu-toggle');
     const sidebar = document.getElementById('sidebar');
-    if(toggle && sidebar) {
-        toggle.addEventListener('click', () => {
-            sidebar.classList.toggle('open');
+    if(!sidebar) return;
+
+    // Backdrop para cerrar al hacer click fuera
+    let overlay = document.getElementById('sidebar-overlay');
+    if(!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'sidebar-overlay';
+        overlay.className = 'sidebar-overlay';
+        document.body.appendChild(overlay);
+    }
+
+    function openSidebar() {
+        sidebar.classList.add('open');
+        overlay.classList.add('active');
+    }
+    function closeSidebar() {
+        sidebar.classList.remove('open');
+        overlay.classList.remove('active');
+    }
+    window.closeSidebar = closeSidebar;
+
+    // Botón X para cerrar (visible en móvil)
+    if(!sidebar.querySelector('.sidebar-close')) {
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'sidebar-close';
+        closeBtn.setAttribute('aria-label', 'Cerrar menú');
+        closeBtn.innerHTML = '<i class="fas fa-times"></i>';
+        closeBtn.addEventListener('click', closeSidebar);
+        sidebar.appendChild(closeBtn);
+    }
+
+    if(toggle) {
+        toggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if(sidebar.classList.contains('open')) closeSidebar();
+            else openSidebar();
         });
     }
+
+    overlay.addEventListener('click', closeSidebar);
+
+    // Cerrar también al navegar por un enlace del menú
+    sidebar.querySelectorAll('.nav-links a').forEach(a => {
+        a.addEventListener('click', closeSidebar);
+    });
 }
 
 async function fetchUserData() {

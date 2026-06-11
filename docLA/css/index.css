@@ -610,6 +610,57 @@ footer {
 
 .mobile-menu-btn:hover { border-color: rgba(255,255,255,0.2); }
 
+/* Mobile menu panel (oculto por defecto; solo se usa en <= 968px) */
+.mobile-menu {
+    display: none;
+    position: fixed;
+    top: 70px;
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    padding: 14px 8% 20px;
+    background: rgba(11, 11, 16, 0.98);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--border);
+    z-index: 999;
+    opacity: 0;
+    transform: translateY(-12px);
+    pointer-events: none;
+    transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+.mobile-menu.open {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+.mobile-menu a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 0.95rem;
+    font-weight: 500;
+    padding: 14px 4px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: color 0.2s;
+}
+
+.mobile-menu a:hover { color: var(--text-primary); }
+
+.mobile-menu a.mm-cta {
+    border-bottom: none;
+    color: #fff;
+    background: linear-gradient(135deg, #6c77ff 0%, var(--accent) 100%);
+    border-radius: 6px;
+    justify-content: center;
+    margin-top: 12px;
+    padding: 12px;
+}
+
 /* ─── AESTHETIC ENHANCEMENTS ──────────────────── */
 
 /* Hero kicker row (status pill + command badge) */
@@ -875,6 +926,9 @@ footer {
 @media (max-width: 968px) {
     .nav-links { display: none; }
     .mobile-menu-btn { display: block; }
+    /* En móvil el header solo muestra el logo y la hamburguesa */
+    .navbar .cta-btn { display: none; }
+    .mobile-menu { display: flex; }
 
     .hero {
         flex-direction: column;
@@ -932,6 +986,9 @@ footer {
     .mockup-bracket { gap: 14px; padding: 22px 14px; }
     .bracket-round { gap: 16px; }
     .champion-col { display: none; }
+    /* Ocultar la estadística "24/7 Online" en móvil */
+    .hero-stats .stat-online { display: none; }
+    .hero-stats .stat-item:nth-child(2) { border-right: none; margin-right: 0; padding-right: 0; }
     .features-grid { grid-template-columns: 1fr; }
     .hero-buttons { flex-direction: column; align-items: flex-start; }
     .cta-band .hero-buttons { align-items: stretch; }

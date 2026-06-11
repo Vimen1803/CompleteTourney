@@ -41,21 +41,24 @@ window.deleteTeam = async function(guildId, teamId) {
     }
 }
 
-// Genera el bracket en HTML a partir de los enfrentamientos guardados en la BD
+// Genera un bracket de DOS LADOS a partir de los enfrentamientos guardados en la BD
 // (t.matches: lista de rondas; cada ronda es una lista de {team1_id, team2_id, winner_id}).
+// La final se coloca en el centro y cada ronda intermedia se reparte entre el lado
+// izquierdo y el derecho; gracias a justify-content:space-around cada fase queda a la
+// altura media de los dos enfrentamientos que la alimentan.
 function renderBracketFromMatches(matches, teams, championId) {
     if (!matches || matches.length === 0) return '';
 
     const nameById = {};
     (teams || []).forEach(tm => { nameById[String(tm.id)] = tm.name; });
 
-    const roundLabel = (count, idx) => {
+    const roundLabel = (count) => {
         if (count === 1) return 'Final';
         if (count === 2) return 'Semifinales';
-        if (count === 4) return 'Cuartos de Final';
-        if (count === 8) return 'Octavos de Final';
+        if (count === 4) return 'Cuartos';
+        if (count === 8) return 'Octavos';
         if (count === 16) return 'Dieciseisavos';
-        return `Ronda ${idx + 1}`;
+        return 'Ronda';
     };
 
     const slot = (id, winnerId) => {
@@ -71,36 +74,54 @@ function renderBracketFromMatches(matches, teams, championId) {
         return `<div class="${cls.join(' ')}"><span class="bracket-team-name">${escapeHtml(label)}</span>${icon}</div>`;
     };
 
-    const columns = matches.map((round, idx) => {
-        const matchesHtml = round.map(m => `
-            <div class="bracket-match">
-                ${slot(m.team1_id, m.winner_id)}
-                ${slot(m.team2_id, m.winner_id)}
-            </div>
-        `).join('');
-        return `
-            <div class="bracket-round">
-                <div class="bracket-round-title">${roundLabel(round.length, idx)}</div>
-                <div class="bracket-round-matches">${matchesHtml}</div>
-            </div>
-        `;
-    }).join('');
+    const matchHtml = (m) => `
+        <div class="bracket-match">
+            ${slot(m.team1_id, m.winner_id)}
+            ${slot(m.team2_id, m.winner_id)}
+        </div>`;
 
-    let championHtml = '';
-    if (championId && championId !== 'BYE_SLOT') {
-        const champName = nameById[String(championId)] || 'Campeón';
-        championHtml = `
-            <div class="bracket-round champion">
-                <div class="bracket-round-title">Campeón</div>
-                <div class="bracket-champion">
-                    <i class="fas fa-crown"></i>
-                    <span>${escapeHtml(champName)}</span>
+    const colHtml = (label, arr, side) => `
+        <div class="bracket-col ${side}">
+            <div class="bracket-col-title">${label}</div>
+            <div class="bracket-col-matches">${arr.map(matchHtml).join('')}</div>
+        </div>`;
+
+    // La última ronda es la final si tiene un único enfrentamiento.
+    const lastRound = matches[matches.length - 1];
+    const hasFinal = lastRound && lastRound.length === 1;
+    const earlyRounds = hasFinal ? matches.slice(0, -1) : matches.slice();
+
+    const leftCols = [];
+    const rightCols = [];
+    earlyRounds.forEach((round) => {
+        const label = roundLabel(round.length);
+        const half = Math.ceil(round.length / 2);
+        leftCols.push(colHtml(label, round.slice(0, half), 'side-left'));
+        rightCols.push(colHtml(label, round.slice(half), 'side-right'));
+    });
+    // El lado derecho se invierte para que la ronda más interna quede junto al centro.
+    rightCols.reverse();
+
+    let centerCol = '';
+    if (hasFinal) {
+        let championHtml = '';
+        if (championId && championId !== 'BYE_SLOT') {
+            const champName = nameById[String(championId)] || 'Campeón';
+            championHtml = `<div class="bracket-champion"><i class="fas fa-crown"></i><span>${escapeHtml(champName)}</span></div>`;
+        }
+        centerCol = `
+            <div class="bracket-col center-col">
+                <div class="bracket-col-title">Final</div>
+                <div class="bracket-col-matches">
+                    <div class="final-wrap">
+                        ${championHtml}
+                        ${matchHtml(lastRound[0])}
+                    </div>
                 </div>
-            </div>
-        `;
+            </div>`;
     }
 
-    return `<div class="bracket-wrap">${columns}${championHtml}</div>`;
+    return `<div class="bracket-wrap">${leftCols.join('')}${centerCol}${rightCols.join('')}</div>`;
 }
 
 async function loadTournament(force = false) {
@@ -239,7 +260,7 @@ async function loadTournament(force = false) {
             ${loginBannerHtml}
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <div style="display:flex; align-items:center; gap:15px;">
-                    <a href="/server?id=${guildId}" class="back-btn" style="text-decoration: none; margin-bottom: 0;"><i class="fas fa-arrow-left"></i> Volver a Servidor</a>
+                    <a href="/server?id=${guildId}" class="back-btn" style="text-decoration: none; margin-bottom: 0;"><i class="fas fa-arrow-left"></i> <span class="back-text">Volver a Servidor</span></a>
                 </div>
                 
                 <div style="display: flex; gap: 20px;">

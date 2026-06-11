@@ -78,6 +78,28 @@ fetchStats();
 
 // Mobile menu
 const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-mobileMenuBtn?.addEventListener('click', () => {
-    alert('Menú móvil - Implementa tu lógica aquí');
+const mobileMenu = document.getElementById('mobileMenu');
+
+function setMenuIcon(open) {
+    const icon = mobileMenuBtn?.querySelector('i');
+    if (icon) icon.className = open ? 'fas fa-times' : 'fas fa-bars';
+}
+
+function closeMobileMenu() {
+    mobileMenu?.classList.remove('open');
+    setMenuIcon(false);
+}
+
+mobileMenuBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const open = mobileMenu?.classList.toggle('open');
+    setMenuIcon(!!open);
+});
+
+// Cerrar al pulsar un enlace o al hacer click fuera
+mobileMenu?.querySelectorAll('a').forEach(a => a.addEventListener('click', closeMobileMenu));
+document.addEventListener('click', (e) => {
+    if (!mobileMenu?.classList.contains('open')) return;
+    if (mobileMenu.contains(e.target) || mobileMenuBtn.contains(e.target)) return;
+    closeMobileMenu();
 });

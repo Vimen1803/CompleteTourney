@@ -91,12 +91,12 @@ try {
     let headerHtml = `
             <div class="dashboard-header">
                 <div style="display:flex; align-items:center; gap:15px;">
-                    <a href="/dashboard" class="back-btn" style="margin-bottom: 0; text-decoration: none;"><i class="fas fa-arrow-left"></i> Volver al Dashboard</a>
+                    <a href="/dashboard" class="back-btn" style="margin-bottom: 0; text-decoration: none;"><i class="fas fa-arrow-left"></i> <span class="back-text">Volver al Dashboard</span></a>
                     <img src="${encodeURI(guild.icon || "https://cdn.discordapp.com/embed/avatars/0.png")}" style="width:48px; height:48px; border-radius:50%;">
                     <h1>${escapeHtml(guild.name)}</h1>
                     ${isLoggedIn ? `
                         <div style="display:flex; align-items:center; gap:10px;">
-                            <span class="badge ${badgeClass}">${roleLabel}</span>
+                            <span class="badge ${badgeClass} server-role-badge">${roleLabel}</span>
                             ${roleLabel === "Externo" && hasInvite ? `<a href="${inviteUrl}" target="_blank" class="btn-join"><i class="fas fa-plus"></i> Unirse</a>` : ""}
                         </div>
                     ` : ""}
@@ -269,8 +269,8 @@ return `
         <div class="active-tourney-hero clickable" onclick="window.location.href='/tournament?guild=${currentGuildId}&tourney=${t.id}'">
             <div class="hero-bg" style="${bgStyle}"></div>
             <div class="hero-overlay">
-                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
-                    <div style="display:flex; gap:16px; font-size:1em; color:rgba(255,255,255,0.9); font-weight:bold; text-shadow:0 1px 2px rgba(0,0,0,0.8);">
+                <div style="display:flex; flex-direction:column; align-items:flex-start; gap:12px; margin-bottom:12px;">
+                    <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center; font-size:1em; color:rgba(255,255,255,0.9); font-weight:bold; text-shadow:0 1px 2px rgba(0,0,0,0.8);">
                         <span class="badge" style="background:${badgeColor}; font-size:0.9em;">${st}</span>
                         ${t.winner_name ? winnerHtml : ""}
                     </div>
@@ -296,13 +296,13 @@ return `
 function buildTournamentsContent(data, canManage) {
 let html = "";
 
-if (canManage) {
-    html += `
-            <div style="margin-bottom:24px; display:flex; justify-content:flex-end;">
-                <button onclick="openCreateModal()" class="btn-modern primary" style="border-radius: 20px;"><i class="fas fa-plus"></i> Nuevo Torneo</button>
-            </div>
-        `;
-}
+// Cabecera: título "Historial de Torneos" a la misma altura que el botón "Nuevo Torneo"
+html += `
+        <div class="tournaments-header">
+            <h3 style="margin:0;">Historial de Torneos</h3>
+            ${canManage ? `<button onclick="openCreateModal()" class="btn-modern primary" style="border-radius: 20px;"><i class="fas fa-plus"></i> Nuevo Torneo</button>` : ""}
+        </div>
+    `;
 
 if (data.history && data.history.length > 0) {
     const cards = data.history
@@ -384,7 +384,6 @@ if (data.history && data.history.length > 0) {
     .join("");
 
     html += `
-            <h3 style="margin-bottom:20px;">Historial de Torneos</h3>
             <div class="history-carousel">${cards}</div>
         `;
 } else {
