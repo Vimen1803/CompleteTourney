@@ -370,6 +370,71 @@
         background: transparent;
 }
 
+/* Equipo ganador (torneo finalizado): borde oro + distintivo */
+.team-item.team-winner {
+        border-color: #ffd700;
+        overflow: visible;
+        box-shadow: 0 0 0 1px #ffd700, 0 6px 22px rgba(255, 215, 0, 0.18);
+}
+.team-winner-badge {
+        position: absolute;
+        top: -11px;
+        left: 14px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        padding: 2px 12px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #ffe08a 0%, #ffb300 100%);
+        color: #1a1300;
+        font-size: 0.72rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+/* Controles de zoom del bracket (flotantes) */
+.bracket-zoom-controls {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        z-index: 50;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding: 6px 8px;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border);
+        border-radius: 30px;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+}
+.bracket-zoom-controls button {
+        width: 32px;
+        height: 32px;
+        border: none;
+        border-radius: 50%;
+        background: transparent;
+        color: var(--text-normal);
+        cursor: pointer;
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.15s, color 0.15s;
+}
+.bracket-zoom-controls button:hover {
+        background: var(--card-hover);
+        color: #fff;
+}
+.bracket-zoom-controls #zoom-label {
+        min-width: 42px;
+        text-align: center;
+        font-size: 0.78rem;
+        color: var(--text-muted);
+        font-variant-numeric: tabular-nums;
+}
+
 /* ─── RESPONSIVE (móvil) ─────────────────────── */
 @media (max-width: 768px) {
         .back-text {

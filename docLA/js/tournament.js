@@ -20,10 +20,45 @@ window.switchTournamentTab = function(tabName) {
     } else {
         if(generalTab) generalTab.style.display = 'none';
         if(matchupsTab) matchupsTab.style.display = 'flex'; // Flex for centering
-        
+
         if(btnGeneral) btnGeneral.classList.remove('active');
         if(btnMatchups) btnMatchups.classList.add('active');
+
+        // La primera vez que se abre el bracket, ajustar para ver todo a la vez
+        if (!bracketAutoFitted && document.querySelector('.bracket-wrap')) {
+            bracketAutoFitted = true;
+            requestAnimationFrame(() => window.fitBracket());
+        } else {
+            applyBracketZoom();
+        }
     }
+};
+
+// ─── Zoom del bracket (propiedad CSS `zoom`: el área de scroll se ajusta sola) ───
+let bracketZoom = 1;
+let bracketAutoFitted = false;
+
+function applyBracketZoom() {
+    const w = document.querySelector('.bracket-wrap');
+    if (w) w.style.zoom = bracketZoom;
+    const lbl = document.getElementById('zoom-label');
+    if (lbl) lbl.textContent = Math.round(bracketZoom * 100) + '%';
+}
+
+window.zoomBracket = function(delta) {
+    bracketZoom = Math.min(1.6, Math.max(0.4, Math.round((bracketZoom + delta) * 100) / 100));
+    applyBracketZoom();
+};
+
+window.fitBracket = function() {
+    const cont = document.getElementById('tab-matchups');
+    const w = document.querySelector('.bracket-wrap');
+    if (!cont || !w) return;
+    w.style.zoom = 1; // medir tamaño natural
+    const avail = cont.clientWidth - 56; // descontar padding
+    const natural = w.scrollWidth || 1;
+    bracketZoom = Math.min(1, Math.max(0.4, Math.round((avail / natural) * 100) / 100));
+    applyBracketZoom();
 };
 
 // Delete Team Function (Available globally)
@@ -344,9 +379,11 @@ async function loadTournament(force = false) {
                                         </div>
                                     ` : '';
                                     
-                                    // Dynamic height + relative positioning for delete button
+                                    // Equipo ganador (torneo finalizado): borde oro + distintivo
+                                    const isWinner = t.status === 'finished' && t.winner_id && t.winner_id !== 'BYE_SLOT' && String(t.winner_id) === String(tm.id);
                                     return `
-                                    <div class="team-item" style="position: relative;">
+                                    <div class="team-item${isWinner ? ' team-winner' : ''}" style="position: relative;">
+                                        ${isWinner ? '<div class="team-winner-badge"><i class="fas fa-crown"></i> Campeón</div>' : ''}
                                         <div class="team-name" style="padding-bottom:5px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; gap:8px; min-width:0;">
                                             <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0;">${escapeHtml(tm.name)}</span>
                                             <span style="font-size:0.75em; background:var(--bg-secondary); padding:2px 8px; border-radius:12px; flex-shrink:0;">${tm.resolved_members.length}</span>
@@ -363,8 +400,11 @@ async function loadTournament(force = false) {
                 </div>
             </div>
             
-            <div id="tab-matchups" style="display: ${matchupsDisplay}; min-height: calc(100vh - 200px); width: 100%; align-items: center; justify-content: ${hasMatches ? 'flex-start' : 'center'}; border-radius: 12px; background: var(--bg-secondary); overflow-x: auto; padding: ${hasMatches ? '28px' : '0'};">${matchupsContent}</div>
+            <div id="tab-matchups" style="display: ${matchupsDisplay}; position: relative; min-height: calc(100vh - 200px); width: 100%; align-items: center; justify-content: ${hasMatches ? 'flex-start' : 'center'}; border-radius: 12px; background: var(--bg-secondary); overflow: auto; padding: ${hasMatches ? '28px' : '0'};">${hasMatches ? `<div class="bracket-zoom-controls"><button onclick="zoomBracket(-0.15)" aria-label="Alejar"><i class="fas fa-minus"></i></button><span id="zoom-label">100%</span><button onclick="zoomBracket(0.15)" aria-label="Acercar"><i class="fas fa-plus"></i></button><button onclick="fitBracket()" title="Ver todo" aria-label="Ver todo"><i class="fas fa-expand"></i></button></div>` : ''}${matchupsContent}</div>
         `;
+
+        // Re-aplicar el zoom del bracket tras el render (la vista se refresca por polling)
+        if (hasMatches) applyBracketZoom();
     } catch(e) {
         console.error('Error loading tournament:', e);
         if (!tourneyData) {
