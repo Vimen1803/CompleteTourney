@@ -119,6 +119,19 @@ function renderBracketFromMatches(matches, teams, championId) {
                     </div>
                 </div>
             </div>`;
+    } else if (leftCols.length > 0) {
+        // Torneo en curso sin final aún: placeholder central para que se entienda el cuadro
+        centerCol = `
+            <div class="bracket-col center-col">
+                <div class="bracket-col-title">Final</div>
+                <div class="bracket-col-matches">
+                    <div class="final-wrap">
+                        <div class="bracket-match bracket-pending">
+                            <div class="bracket-team tbd"><span class="bracket-team-name"><i class="fas fa-hourglass-half"></i> Por disputar</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
     }
 
     return `<div class="bracket-wrap">${leftCols.join('')}${centerCol}${rightCols.join('')}</div>`;
@@ -333,7 +346,7 @@ async function loadTournament(force = false) {
                                     
                                     // Dynamic height + relative positioning for delete button
                                     return `
-                                    <div class="team-item" style="height: calc(30 + ${t.max_members * 50}px); position: relative;">
+                                    <div class="team-item" style="position: relative;">
                                         <div class="team-name" style="padding-bottom:5px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; gap:8px; min-width:0;">
                                             <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0;">${escapeHtml(tm.name)}</span>
                                             <span style="font-size:0.75em; background:var(--bg-secondary); padding:2px 8px; border-radius:12px; flex-shrink:0;">${tm.resolved_members.length}</span>

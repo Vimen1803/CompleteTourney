@@ -1,19 +1,19 @@
 :root {
-  --bg-primary: #36393f;
-  --bg-secondary: #2f3136;
-  --bg-tertiary: #202225;
-  --text-normal: #dcddde;
-  --text-muted: #72767d;
-  --text-header: #fff;
+  --bg-primary: #15161c;
+  --bg-secondary: #0f1015;
+  --bg-tertiary: #0a0a0e;
+  --text-normal: #e4e4ea;
+  --text-muted: #80808f;
+  --text-header: #ffffff;
   --accent: #5865f2;
   --accent-hover: #4752c4;
-  --card-bg: #2f3136;
-  --card-hover: #40444b;
-  --border: #202225;
+  --card-bg: #0f1015;
+  --card-hover: #181922;
+  --border: #23242e;
   --success: #43b581;
   --danger: #f04747;
   --warning: #faa61a;
-  --modal-bg: #36393f;
+  --modal-bg: #14141b;
 }
 * {
   margin: 0;
@@ -21,7 +21,7 @@
   box-sizing: border-box;
 }
 body {
-  font-family: "Inter", sans-serif;
+  font-family: 'DM Sans', "Inter", sans-serif;
   background-color: var(--bg-primary);
   color: var(--text-normal);
   height: 100vh;
@@ -179,15 +179,15 @@ body {
 }
 
 .action-btn.primary {
-  background-color: black;
+  background: linear-gradient(135deg, #6c77ff 0%, var(--accent) 100%);
   color: white;
   padding: 8px 16px;
-  border-radius: 4px;
+  border-radius: 6px;
   text-decoration: none;
 }
 
 .action-btn.primary:hover {
-  background-color: rgb(51, 47, 47);
+  background: linear-gradient(135deg, #5b67f0 0%, var(--accent-hover) 100%);
   text-decoration: none;
 }
 
@@ -239,14 +239,14 @@ body {
   text-decoration: none;
 }
 
-/* Primary Modern (Blurple Gradient) */
+/* Primary Modern (Blurple Gradient) — alineado con la landing */
 .btn-modern.primary {
   background: var(--accent);
-  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
+  background: linear-gradient(135deg, #6c77ff 0%, var(--accent) 100%);
   color: white;
   padding: 10px 24px;
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(88, 101, 242, 0.25);
+  box-shadow: 0 4px 14px rgba(88, 101, 242, 0.28);
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -679,6 +679,16 @@ body {
     min-width: 0;
     max-width: none;
   }
+}
+
+/* Foco visible para navegación por teclado (accesibilidad) */
+a:focus-visible,
+button:focus-visible,
+[role="button"]:focus-visible,
+.clickable:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 6px;
 }
 
 /* Status Dot Fix */

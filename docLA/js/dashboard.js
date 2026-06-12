@@ -64,6 +64,14 @@ async function refreshServers() {
                 card.onclick = () => window.open(inviteUrl, '_blank');
             }
 
+            // Accesibilidad: la tarjeta es operable por teclado
+            card.tabIndex = 0;
+            card.setAttribute('role', 'button');
+            card.setAttribute('aria-label', g.name);
+            card.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); card.click(); }
+            });
+
             const roleLabel = g.role_label || (g.can_manage ? 'Admin' : 'Miembro');
             const badgeClass = roleLabel === 'Admin' ? 'admin' : (roleLabel === 'Organizador' ? 'mod' : 'member');
             const imgStyle = isBot ? '' : 'filter: grayscale(100%); opacity: 0.7;';

@@ -176,18 +176,29 @@ try {
 }
 
 function buildOverviewContent(data, canManage) {
+const activeT = data.active_tournament;
+const lastT = (data.history && data.history.length) ? data.history[0] : null;
+const statusMap = { open: "Abierto", active: "En Curso", finished: "Finalizado", pending: "En Espera" };
+const estadoStr = activeT ? (statusMap[activeT.status] || activeT.status) : "Sin torneo activo";
+const estadoColor = activeT
+    ? (activeT.status === "open" || activeT.status === "active" ? "var(--success)" : "var(--warning)")
+    : "var(--text-muted)";
+const ganadorStr = (lastT && lastT.winner_name) ? lastT.winner_name : "—";
+
+const tile = (label, value, valueStyle = "") => `
+                <div style="background:var(--bg-tertiary); padding:16px; border-radius:8px; border:1px solid var(--border);">
+                    <div style="font-size:0.78em; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em;">${label}</div>
+                    <div style="font-size:1.4em; font-weight:700; margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; ${valueStyle}">${value}</div>
+                </div>`;
+
 let html = `
         <div class="dashboard-card" style="margin-bottom: 24px;">
             <h2>Estadísticas Rápidas</h2>
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; margin-top:15px;">
-                <div style="background:var(--bg-tertiary); padding:15px; border-radius:4px;">
-                    <div style="font-size:0.9em; color:var(--text-muted)">Miembros</div>
-                    <div style="font-size:1.5em; font-weight:bold;">${data.guild.member_count || "-"}</div>
-                </div>
-                <div style="background:var(--bg-tertiary); padding:15px; border-radius:4px;">
-                    <div style="font-size:0.9em; color:var(--text-muted)">Total Torneos</div>
-                    <div style="font-size:1.5em; font-weight:bold;">${(data.history || []).length}</div>
-                </div>
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap:16px; margin-top:16px;">
+                ${tile("Miembros", data.guild.member_count || "-")}
+                ${tile("Torneos jugados", (data.history || []).length)}
+                ${tile("Estado actual", escapeHtml(estadoStr), `color:${estadoColor};`)}
+                ${tile("Último ganador", `<i class="fas fa-crown" style="color:#ffd700; font-size:0.8em;"></i> ${escapeHtml(ganadorStr)}`)}
             </div>
         </div>
     `;
