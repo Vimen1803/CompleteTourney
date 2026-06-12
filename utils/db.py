@@ -331,6 +331,17 @@ class DBManager:
         return await cursor.to_list(length=limit)
 
     @staticmethod
+    async def ensure_indexes():
+        """
+        Crea los índices necesarios. El de health_checks es TTL: los registros
+        caducan a los 30 días para que la colección no crezca sin límite.
+        """
+        try:
+            await health_collection.create_index("timestamp", expireAfterSeconds=2592000)
+        except Exception as e:
+            print(f"[DB] No se pudo crear el índice TTL de health_checks: {e}")
+
+    @staticmethod
     async def update_heartbeat(latency: float = 0.0):
         """
         Updates the bot's last seen timestamp and latency.

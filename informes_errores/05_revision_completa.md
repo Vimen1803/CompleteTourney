@@ -51,17 +51,41 @@
 
 ---
 
-## 💡 Recomendaciones (no aplicadas — requieren decisión o mayor alcance)
+## ✅ Recomendaciones implementadas (segunda tanda)
 
-| Ref | Tema | Detalle |
-|-----|------|---------|
-| **R-06** | **Caché de llamadas a Discord** | `users/@me/guilds` y `get_guild_member` se piden varias veces por carga de página y por endpoint, sin caché. Con varios usuarios concurrentes multiplica las llamadas y acerca al *rate limit* (429). Recomendado: caché corta (30–60 s) por usuario/guild. *(Cambio de arquitectura; conviene decidir TTL y almacén.)* |
-| **R-07** | **Rate limiting en reportes** | `/api/report/*` solo requieren login; un usuario podría spamear miles de reportes. Recomendado: límite por usuario/tiempo (p. ej. `slowapi`). |
-| **R-08** | **Manejo de 429 (rate limit)** | Las respuestas 429 de Discord se tratan como fallo genérico; no se respeta `Retry-After`. |
-| **R-09** | **Crecimiento de `health_checks`** | La colección crece sin límite (un registro por hora, indefinidamente). Recomendado: índice TTL o cap. |
-| **R-10** | **Validación en `update_config`** | No se valida la longitud del `prefix` (el bot lo limita a 5) ni que `admin_roles`/`playing_role_id` sean IDs válidos. Además duplica la lógica de permisos en vez de usar el helper `user_can_manage`. |
-| **R-11** | **Consolidar checks de permisos** | `delete_team_api`, `update_config`, `update_tournament` repiten el patrón de verificación inline; podrían reutilizar `user_can_manage` para consistencia. |
-| **R-12** | **`except:` desnudos restantes** | Quedan algunos `except:` de "mejor esfuerzo" (p. ej. `server.py:32`, checks de rol). Son intencionados (no romper flujos best-effort), pero podrían registrar el error. |
+### R-06 · Caché de llamadas a Discord (Riesgo: medio)
+- **Solución:** nuevo módulo `utils/cache.py` con `TTLCache` (en memoria, thread-safe).
+  `api.py` cachea `get_guild` (60s), `get_guild_member` (30s), `get_guild_channels`
+  (60s), `get_guild_roles` (60s), `get_user` (300s) y `get_bot_guilds` (60s). Solo
+  se cachean respuestas 200 (no se cachean fallos). Reduce las ráfagas de llamadas
+  repetidas durante una misma carga de página y aleja del *rate limit*.
+
+### R-07 · Rate limiting en reportes (Riesgo: bajo)
+- **Solución:** `RateLimiter` en `utils/cache.py`. `/api/report/bug` y
+  `/api/report/suggestion` limitan a **5 reportes / 10 min por usuario** (HTTP 429).
+
+### R-08 · Manejo de 429 de Discord (Riesgo: bajo)
+- **Solución:** `DiscordAPI._request` reintenta **una vez** ante un 429 respetando
+  `Retry-After` (acotado a 5 s).
+
+### R-09 · Crecimiento de `health_checks` (Riesgo: bajo)
+- **Solución:** `DBManager.ensure_indexes()` crea un **índice TTL** sobre `timestamp`
+  (caducidad 30 días). Se invoca en el `startup` del servidor web.
+
+### R-10 · Validación en `update_config` (Riesgo: bajo)
+- **Solución:** se valida que el `prefix` no supere los 5 caracteres (coherente con
+  el bot).
+
+### R-11 · Consolidar checks de permisos (Mantenibilidad)
+- **Solución:** `delete_team_api` y `update_tournament` usan ahora el helper
+  `user_can_manage` (igual que `create_tournament`, `delete_tournament` y la
+  blacklist). `update_config` conserva su lógica propia porque necesita distinguir
+  `is_admin` (los organizadores no pueden editar `admin_roles`).
+
+### R-12 · `except:` desnudos (Riesgo: muy bajo)
+- **Solución (parcial):** el `except` del montaje de `/data` ahora registra el error.
+  El resto de `except` de "mejor esfuerzo" (checks de rol que no deben romper el
+  flujo) se mantienen a propósito.
 
 ---
 
@@ -80,7 +104,9 @@ Durante la revisión se confirmó que ya estaban resueltas (en tandas anteriores
 ---
 
 ## Verificación realizada
-- `python -m py_compile server.py utils/api.py` → **sin errores**.
-- `python -c "import server"` → **importa correctamente**.
+- `python -m py_compile server.py utils/api.py utils/cache.py utils/db.py` → **sin errores**.
+- `python -c "import server"` → **importa correctamente** (con caché + rate limiter).
+- Test de `utils/cache.py`: `TTLCache` (set/get/expiry/invalidate) y `RateLimiter`
+  (5 permitidos, 6º denegado, aislamiento por usuario) → **OK**.
 - `node --check` sobre los JS modificados (toasts) → **sin errores de sintaxis**.
 - Búsqueda de `requests.*` sin `timeout` → **0 restantes**.

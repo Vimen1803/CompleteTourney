@@ -18,6 +18,7 @@ def utcnow():
     return datetime.now(timezone.utc)
 from utils.db import DBManager
 from utils.api import DiscordAPI
+from utils.cache import report_limiter
 from config import DISCORD_CLIENT_ID as CLIENT_ID, DISCORD_CLIENT_SECRET as CLIENT_SECRET, REDIRECT_URI, API_ENDPOINT, SESSION_SECRET as SECRET_KEY
 
 app = FastAPI(docs_url=None, redoc_url=None)
@@ -29,7 +30,8 @@ app.mount("/js", StaticFiles(directory="docLA/js"), name="js")
 app.mount("/img", StaticFiles(directory="img"), name="img")
 try:
     app.mount("/data", StaticFiles(directory="docLA/data"), name="data")
-except: pass
+except Exception as e:
+    print(f"[startup] No se pudo montar /data: {e}")
 
 # URL base de documentación normalizada (sin barra final) para construir enlaces sin '//'
 DOC_URL_BASE = (DOC_URL or "").rstrip("/")
@@ -634,7 +636,11 @@ async def update_config(guild_id: int, request: Request):
         return JSONResponse(status_code=403, content={"error": "No tienes permisos."})
 
     data = await request.json()
-    
+
+    # Validar prefijo (el bot lo limita a 5 caracteres)
+    if "prefix" in data and data["prefix"] and len(str(data["prefix"])) > 5:
+        return JSONResponse(status_code=400, content={"error": "El prefijo no puede superar los 5 caracteres."})
+
     # Organizers can't edit admin_roles
     if not is_admin and "admin_roles" in data:
         del data["admin_roles"]
@@ -674,6 +680,10 @@ async def report_bug(request: Request):
     user = request.session.get("user")
     if not user: return JSONResponse(status_code=401, content={"error": "Login required"})
 
+    # Anti-spam: máx. 5 reportes cada 10 minutos por usuario
+    if not report_limiter.allow(f"bug:{user['id']}", 5, 600):
+        return JSONResponse(status_code=429, content={"error": "Demasiados reportes. Inténtalo de nuevo en unos minutos."})
+
     data = await request.json()
     description = data.get("description")
     if not description: return JSONResponse(status_code=400, content={"error": "Descripción requerida"})
@@ -705,6 +715,10 @@ async def report_bug(request: Request):
 async def report_suggestion(request: Request):
     user = request.session.get("user")
     if not user: return JSONResponse(status_code=401, content={"error": "Login required"})
+
+    # Anti-spam: máx. 5 sugerencias cada 10 minutos por usuario
+    if not report_limiter.allow(f"sug:{user['id']}", 5, 600):
+        return JSONResponse(status_code=429, content={"error": "Demasiadas sugerencias. Inténtalo de nuevo en unos minutos."})
 
     data = await request.json()
     description = data.get("description")
@@ -888,6 +902,7 @@ async def health_check_loop():
 
 @app.on_event("startup")
 async def startup_event():
+    await DBManager.ensure_indexes()
     asyncio.create_task(health_check_loop())
 
 # ==========================================
@@ -991,36 +1006,8 @@ async def update_tournament(guild_id: int, tournament_id: str, request: Request)
     user = request.session.get("user")
     if not user: return JSONResponse(status_code=401, content={"error": "Login required"})
 
-    token = request.session.get("access_token")
-    user_guilds = []
-    if token:
-         try: 
-             resp = requests.get(f"{API_ENDPOINT}/users/@me/guilds", headers={"Authorization": f"Bearer {token}"}, timeout=10)
-             if resp.status_code == 200:
-                 user_guilds = resp.json()
-         except: pass
-    
-    if not isinstance(user_guilds, list): user_guilds = []
-
-    target = next((g for g in user_guilds if g.get('id') == str(guild_id)), None)
-    can_manage = False
-
-    if target:
-        perm_int = int(target.get('permissions', 0))
-        is_admin = (perm_int & 0x8) == 0x8 or (perm_int & 0x20) == 0x20
-        if is_admin: can_manage = True
-        else:
-            try:
-                config = await DBManager.get_or_create_guild_config(guild_id)
-                admin_roles = config.get("admin_roles", [])
-                if admin_roles:
-                    mem = await asyncio.to_thread(DiscordAPI.get_guild_member, str(guild_id), user['id'])
-                    if mem:
-                         if any(rid in admin_roles for rid in mem.get('roles', [])):
-                             can_manage = True
-            except: pass
-
-    if not can_manage: return JSONResponse(status_code=403, content={"error": "Forbidden"})
+    if not await user_can_manage(guild_id, request):
+        return JSONResponse(status_code=403, content={"error": "Forbidden"})
 
     data = await request.json()
 
@@ -1220,32 +1207,8 @@ async def delete_team_api(guild_id: int, team_id: str, request: Request):
     user = request.session.get("user")
     if not user: return JSONResponse(status_code=401, content={"error": "Login required"})
 
-    # Permission Check Reuse
-    token = request.session.get("access_token")
-    user_guilds = []
-    if token:
-         try: user_guilds = requests.get(f"{API_ENDPOINT}/users/@me/guilds", headers={"Authorization": f"Bearer {token}"}, timeout=10).json()
-         except: pass
-    
-    target = next((g for g in user_guilds if g['id'] == str(guild_id)), None)
-    can_manage = False
-
-    if target:
-        perm_int = int(target.get('permissions', 0))
-        is_admin = (perm_int & 0x8) == 0x8 or (perm_int & 0x20) == 0x20
-        if is_admin: can_manage = True
-        else:
-            try:
-                config = await DBManager.get_or_create_guild_config(guild_id)
-                admin_roles = config.get("admin_roles", [])
-                if admin_roles:
-                    mem = await asyncio.to_thread(DiscordAPI.get_guild_member, str(guild_id), user['id'])
-                    if mem:
-                         if any(rid in admin_roles for rid in mem.get('roles', [])):
-                             can_manage = True
-            except: pass
-
-    if not can_manage: return JSONResponse(status_code=403, content={"error": "Forbidden"})
+    if not await user_can_manage(guild_id, request):
+        return JSONResponse(status_code=403, content={"error": "Forbidden"})
 
     team = await DBManager.get_team(team_id)
     if not team: return JSONResponse(status_code=404, content={"error": "Team not found"})
