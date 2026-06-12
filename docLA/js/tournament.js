@@ -34,10 +34,10 @@ window.deleteTeam = async function(guildId, teamId) {
         if(res.ok) {
             loadTournament(true); // Force Reload
         } else {
-            alert("Error al eliminar equipo. Verifica permisos.");
+            showToast("Error al eliminar equipo. Verifica permisos.", 'error');
         }
     } catch(e) {
-            alert("Error de conexión");
+            showToast("Error de conexión", 'error');
     }
 }
 
@@ -607,7 +607,7 @@ window.submitEditTournament = async function(e) {
     try {
         const fileImg = await processImageFile(fileInput);
         if(fileImg) img = fileImg;
-    } catch(err) { return alert(err.message); }
+    } catch(err) { return showToast(err.message, 'error'); }
     */
 
     // If no image provided, use server icon as fallback
@@ -643,14 +643,14 @@ window.submitEditTournament = async function(e) {
         });
         
         if(res.ok) {
-            alert("Torneo actualizado!");
+            showToast("Torneo actualizado!", 'success');
             loadTournament(true);
             closeEditModal();
         } else {
             const d = await res.json();
-            alert("Error: " + d.error);
+            showToast("Error: " + d.error, 'error');
         }
-    } catch(e) { alert("Error de conexión"); }
+    } catch(e) { showToast("Error de conexión", 'error'); }
 }
 
 window.deleteTournament = async function() {
@@ -664,7 +664,7 @@ window.deleteTournament = async function() {
             if(res.ok) {
                 window.location.href = `/server?id=${guildId}`;
             } else {
-                alert("Error al eliminar");
+                showToast("Error al eliminar", 'error');
             }
-        } catch(e) { alert("Error de conexión"); }
+        } catch(e) { showToast("Error de conexión", 'error'); }
 }

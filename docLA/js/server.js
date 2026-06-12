@@ -880,7 +880,7 @@ try {
     const fileImg = await processImageFile(fileInput);
     if (fileImg) img = fileImg;
 } catch (err) {
-    return alert(err.message);
+    return showToast(err.message, 'error');
 }
 */
 
@@ -891,7 +891,7 @@ if (!img || !img.trim() || img === "null" || img === "None" || img === "undefine
     }
 }
 
-if (!name) return alert("Nombre requerido");
+if (!name) return showToast("Nombre requerido", 'error');
 
 try {
     const res = await fetch(
@@ -918,12 +918,12 @@ try {
     if (res.ok) {
     closeCreateModal();
     loadServerDetail();
-    alert("Torneo creado!");
+    showToast("Torneo creado!", 'success');
     } else {
-    alert("Error: " + data.error);
+    showToast("Error: " + data.error, 'error');
     }
 } catch (e) {
-    alert("Error de conexión");
+    showToast("Error de conexión", 'error');
 }
 }
 
@@ -942,7 +942,7 @@ if (
     t = currentServerDataCache.history.find((x) => x.id === id);
 }
 
-if (!t) return alert("Error: Torneo no encontrado");
+if (!t) return showToast("Error: Torneo no encontrado", 'error');
 
 document.getElementById("edit-t-id").value = t.id;
 document.getElementById("edit-t-name").value = t.name;
@@ -1020,7 +1020,7 @@ try {
     const fileImg = await processImageFile(fileInput);
     if (fileImg) img = fileImg;
 } catch (err) {
-    return alert(err.message);
+    return showToast(err.message, 'error');
 }
 
 // If no image provided, use server icon as fallback
@@ -1055,13 +1055,13 @@ try {
     if (res.ok) {
     closeEditModal();
     loadServerDetail();
-    alert("Torneo actualizado!");
+    showToast("Torneo actualizado!", 'success');
     } else {
     const d = await res.json();
-    alert("Error: " + d.error);
+    showToast("Error: " + d.error, 'error');
     }
 } catch (e) {
-    alert("Error de conexión");
+    showToast("Error de conexión", 'error');
 }
 }
 
@@ -1083,10 +1083,10 @@ try {
     if (res.ok) {
     loadServerDetail();
     } else {
-    alert("Error al eliminar");
+    showToast("Error al eliminar", 'error');
     }
 } catch (e) {
-    alert("Error de conexión");
+    showToast("Error de conexión", 'error');
 }
 }
 
@@ -1112,10 +1112,10 @@ try {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
     });
-    if (res.ok) alert("Configuración guardada exitosamente");
-    else alert("Error al guardar");
+    if (res.ok) showToast("Configuración guardada exitosamente", 'success');
+    else showToast("Error al guardar", 'error');
 } catch (err) {
-    alert("Error de conexión");
+    showToast("Error de conexión", 'error');
 }
 }
 
@@ -1189,10 +1189,10 @@ async function showAddBlacklistModal() {
             loadBlacklist();
         } else {
             const data = await res.json();
-            alert("Error: " + data.error);
+            showToast("Error: " + data.error, 'error');
         }
     } catch(e) {
-        alert("Error de conexión");
+        showToast("Error de conexión", 'error');
     }
 }
 
@@ -1209,10 +1209,10 @@ async function removeBlacklistUser(userId) {
         if(res.ok) {
             loadBlacklist();
         } else {
-            alert("Error al eliminar");
+            showToast("Error al eliminar", 'error');
         }
     } catch(e) {
-        alert("Error de conexión");
+        showToast("Error de conexión", 'error');
     }
 }
 

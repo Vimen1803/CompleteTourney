@@ -13,6 +13,37 @@ function escapeHtml(value) {
 }
 window.escapeHtml = escapeHtml;
 
+// --- Toasts (reemplazan a los alert() nativos) ---
+window.showToast = function(message, type = 'info') {
+    let container = document.getElementById('toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+    }
+
+    const icons = {
+        success: 'fa-circle-check',
+        error: 'fa-circle-exclamation',
+        warning: 'fa-triangle-exclamation',
+        info: 'fa-circle-info'
+    };
+
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = `<i class="fas ${icons[type] || icons.info}"></i><span>${escapeHtml(message)}</span>`;
+    container.appendChild(toast);
+
+    // Forzar reflow para que la transición de entrada se aplique
+    requestAnimationFrame(() => toast.classList.add('show'));
+
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 3500);
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     initLayout();
 });
@@ -256,12 +287,12 @@ window.submitBug = async function(e) {
             })
         });
         if(res.ok) {
-            alert("¡Reporte enviado! Gracias por ayudarnos.");
+            showToast("¡Reporte enviado! Gracias por ayudarnos.", 'success');
             window.closeBugModal();
         } else {
-            alert("Error al enviar reporte.");
+            showToast("Error al enviar reporte.", 'error');
         }
-    } catch(e) { alert("Error de conexión"); }
+    } catch(e) { showToast("Error de conexión", 'error'); }
 }
 
 window.openSuggestionModal = function() {
@@ -293,10 +324,10 @@ window.submitSuggestion = async function(e) {
             })
         });
         if(res.ok) {
-            alert("¡Sugerencia enviada! Gracias por tu aporte.");
+            showToast("¡Sugerencia enviada! Gracias por tu aporte.", 'success');
             window.closeSuggestionModal();
         } else {
-            alert("Error al enviar sugerencia.");
+            showToast("Error al enviar sugerencia.", 'error');
         }
-    } catch(e) { alert("Error de conexión"); }
+    } catch(e) { showToast("Error de conexión", 'error'); }
 }

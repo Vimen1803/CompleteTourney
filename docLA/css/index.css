@@ -809,6 +809,92 @@ footer {
 
 .champion-card i { font-size: 1.3rem; }
 
+/* ─── WHY-US MOCKUP (mensaje de Discord) ──────── */
+.why-mockup {
+    background: linear-gradient(160deg, #14141e 0%, #0d0d14 100%);
+    padding: 22px 24px 26px;
+    height: auto;
+    overflow: hidden;
+}
+
+.dc-channel {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    padding-bottom: 14px;
+    margin-bottom: 18px;
+    border-bottom: 1px solid var(--border);
+    letter-spacing: 0.03em;
+}
+
+.dc-message { display: flex; gap: 16px; }
+
+.dc-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6c77ff, var(--accent));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.dc-body { flex: 1; min-width: 0; }
+
+.dc-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+
+.dc-name { color: var(--text-primary); font-weight: 600; font-size: 0.95rem; }
+
+.dc-bot {
+    background: var(--accent);
+    color: #fff;
+    font-size: 0.6rem;
+    font-weight: 600;
+    padding: 1px 5px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.dc-time { color: var(--text-secondary); font-size: 0.7rem; }
+
+.dc-embed {
+    border-left: 4px solid var(--accent);
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 4px;
+    padding: 14px 16px;
+    max-width: 440px;
+}
+
+.dc-embed-title { color: var(--text-primary); font-weight: 700; font-size: 0.95rem; margin-bottom: 6px; }
+.dc-embed-desc { color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 14px; }
+
+.dc-embed-fields { display: flex; gap: 24px; flex-wrap: wrap; margin-bottom: 12px; }
+.dc-field { display: flex; flex-direction: column; gap: 3px; }
+.dc-field-name { color: var(--text-primary); font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+.dc-field-val { color: var(--text-secondary); font-size: 0.82rem; }
+
+.dc-embed-footer { color: var(--text-secondary); font-size: 0.68rem; opacity: 0.7; font-family: 'JetBrains Mono', monospace; }
+
+.dc-reactions { display: flex; gap: 8px; margin-top: 12px; }
+.dc-react {
+    background: rgba(88, 101, 242, 0.1);
+    border: 1px solid rgba(88, 101, 242, 0.25);
+    border-radius: 8px;
+    padding: 3px 10px;
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+}
+
 /* Monospace section kicker label */
 .kicker {
     display: inline-block;

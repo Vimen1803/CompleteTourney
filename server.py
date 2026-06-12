@@ -59,7 +59,8 @@ async def user_can_manage(guild_id: int, request: Request) -> bool:
             resp = await asyncio.to_thread(
                 lambda: requests.get(
                     f"{API_ENDPOINT}/users/@me/guilds",
-                    headers={"Authorization": f"Bearer {token}"}
+                    headers={"Authorization": f"Bearer {token}"},
+                    timeout=10
                 ).json()
             )
             if isinstance(resp, list):
@@ -160,16 +161,6 @@ async def serve_tournament(tourney: Optional[str] = None, id: Optional[str] = No
 # ==========================================
 # RUTAS DE AUTH
 # ==========================================
-# ... [rest of the file] ...
-
-
-
-if __name__ == "__main__":
-    uvicorn.run("server:app", host="0.0.0.0", port=8080, reload=True)
-
-# ==========================================
-# RUTAS DE AUTH
-# ==========================================
 @app.get("/login")
 async def login(request: Request, redirect: str = None):
     # Store redirect URL in session for after callback
@@ -192,13 +183,13 @@ async def callback(code: str, request: Request):
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
         
         # Requests es síncrono, idealmente usar aiohttp, pero para este uso es aceptable
-        token_response = await asyncio.to_thread(requests.post, f"{API_ENDPOINT}/oauth2/token", data=data, headers=headers)
+        token_response = await asyncio.to_thread(requests.post, f"{API_ENDPOINT}/oauth2/token", data=data, headers=headers, timeout=10)
         token_response.raise_for_status()
         tokens = token_response.json()
-        
+
         user_response = await asyncio.to_thread(requests.get, f"{API_ENDPOINT}/users/@me", headers={
             "Authorization": f"Bearer {tokens['access_token']}"
-        })
+        }, timeout=10)
         user_response.raise_for_status()
         user_data = user_response.json()
         
@@ -214,7 +205,8 @@ async def callback(code: str, request: Request):
             return RedirectResponse(url=redirect_url)
         return RedirectResponse(url="/dashboard")
     except Exception as e:
-        return JSONResponse(status_code=400, content={"error": str(e)})
+        print(f"[callback] Error de OAuth: {e}")
+        return JSONResponse(status_code=400, content={"error": "No se pudo completar el inicio de sesión."})
 
 @app.get("/logout")
 async def logout(request: Request):
@@ -239,8 +231,12 @@ async def api_guilds(request: Request):
         return JSONResponse(status_code=401, content={"error": "Unauthorized"})
 
     # 1. Obtener Guilds del Usuario (OAuth) - Fuente de permisos
-    user_guilds_oauth = await asyncio.to_thread(lambda: requests.get(f"{API_ENDPOINT}/users/@me/guilds", headers={"Authorization": f"Bearer {token}"}).json())
-    
+    try:
+        user_guilds_oauth = await asyncio.to_thread(lambda: requests.get(f"{API_ENDPOINT}/users/@me/guilds", headers={"Authorization": f"Bearer {token}"}, timeout=10).json())
+    except Exception as e:
+        print(f"[api_guilds] Error obteniendo guilds OAuth: {e}")
+        return JSONResponse(content=[])
+
     if not isinstance(user_guilds_oauth, list):
          return JSONResponse(content=[])
 
@@ -330,7 +326,7 @@ async def get_guild_details(guild_id: int, request: Request):
         # Fetch User OAuth Guilds for checking Admin (efficient enough for single view)
         user_guilds_oauth = []
         if token:
-             resp_g = await asyncio.to_thread(lambda: requests.get(f"{API_ENDPOINT}/users/@me/guilds", headers={"Authorization": f"Bearer {token}"}).json())
+             resp_g = await asyncio.to_thread(lambda: requests.get(f"{API_ENDPOINT}/users/@me/guilds", headers={"Authorization": f"Bearer {token}"}, timeout=10).json())
              if isinstance(resp_g, list):
                  user_guilds_oauth = resp_g
              else:
@@ -448,7 +444,7 @@ async def get_guild_details(guild_id: int, request: Request):
         })
     except Exception as e:
         print(f"Error in get_guild_details: {e}")
-        return JSONResponse(status_code=500, content={"error": f"Internal Server Error: {str(e)}"})
+        return JSONResponse(status_code=500, content={"error": "Error interno del servidor."})
 
 @app.get("/api/guild/{guild_id}/public")
 async def get_guild_public(guild_id: int, request: Request):
@@ -472,7 +468,7 @@ async def get_guild_public(guild_id: int, request: Request):
         # Only check permissions if user is logged in
         if user and token:
             user_guilds_oauth = []
-            resp_g = await asyncio.to_thread(lambda: requests.get(f"{API_ENDPOINT}/users/@me/guilds", headers={"Authorization": f"Bearer {token}"}).json())
+            resp_g = await asyncio.to_thread(lambda: requests.get(f"{API_ENDPOINT}/users/@me/guilds", headers={"Authorization": f"Bearer {token}"}, timeout=10).json())
             if isinstance(resp_g, list):
                 user_guilds_oauth = resp_g
             
@@ -601,7 +597,7 @@ async def get_guild_public(guild_id: int, request: Request):
         })
     except Exception as e:
         print(f"Error in get_guild_public: {e}")
-        return JSONResponse(status_code=500, content={"error": f"Internal Server Error: {str(e)}"})
+        return JSONResponse(status_code=500, content={"error": "Error interno del servidor."})
 
 @app.post("/api/guild/{guild_id}/config")
 async def update_config(guild_id: int, request: Request):
@@ -613,7 +609,7 @@ async def update_config(guild_id: int, request: Request):
     token = request.session.get("access_token")
     user_guilds = []
     if token:
-         resp = await asyncio.to_thread(lambda: requests.get(f"{API_ENDPOINT}/users/@me/guilds", headers={"Authorization": f"Bearer {token}"}).json())
+         resp = await asyncio.to_thread(lambda: requests.get(f"{API_ENDPOINT}/users/@me/guilds", headers={"Authorization": f"Bearer {token}"}, timeout=10).json())
          if isinstance(resp, list):
              user_guilds = resp
     
@@ -681,6 +677,8 @@ async def report_bug(request: Request):
     data = await request.json()
     description = data.get("description")
     if not description: return JSONResponse(status_code=400, content={"error": "Descripción requerida"})
+    if len(description) > 1500:
+        return JSONResponse(status_code=400, content={"error": "La descripción es demasiado larga (máx. 1500 caracteres)."})
 
     # Optional: Server context
     server_id = data.get("server_id")
@@ -711,6 +709,8 @@ async def report_suggestion(request: Request):
     data = await request.json()
     description = data.get("description")
     if not description: return JSONResponse(status_code=400, content={"error": "Descripción requerida"})
+    if len(description) > 1500:
+        return JSONResponse(status_code=400, content={"error": "La descripción es demasiado larga (máx. 1500 caracteres)."})
 
     # Optional: Server context
     server_id = data.get("server_id")
@@ -995,7 +995,7 @@ async def update_tournament(guild_id: int, tournament_id: str, request: Request)
     user_guilds = []
     if token:
          try: 
-             resp = requests.get(f"{API_ENDPOINT}/users/@me/guilds", headers={"Authorization": f"Bearer {token}"})
+             resp = requests.get(f"{API_ENDPOINT}/users/@me/guilds", headers={"Authorization": f"Bearer {token}"}, timeout=10)
              if resp.status_code == 200:
                  user_guilds = resp.json()
          except: pass
@@ -1087,7 +1087,7 @@ async def get_tournament_details(guild_id: int, tournament_id: str, request: Req
     if user and token:
         try:
             user_guilds_oauth = []
-            resp_g = await asyncio.to_thread(lambda: requests.get(f"{API_ENDPOINT}/users/@me/guilds", headers={"Authorization": f"Bearer {token}"}).json())
+            resp_g = await asyncio.to_thread(lambda: requests.get(f"{API_ENDPOINT}/users/@me/guilds", headers={"Authorization": f"Bearer {token}"}, timeout=10).json())
             if isinstance(resp_g, list): user_guilds_oauth = resp_g
             
             target = next((g for g in user_guilds_oauth if g['id'] == str(guild_id)), None)
@@ -1224,7 +1224,7 @@ async def delete_team_api(guild_id: int, team_id: str, request: Request):
     token = request.session.get("access_token")
     user_guilds = []
     if token:
-         try: user_guilds = requests.get(f"{API_ENDPOINT}/users/@me/guilds", headers={"Authorization": f"Bearer {token}"}).json()
+         try: user_guilds = requests.get(f"{API_ENDPOINT}/users/@me/guilds", headers={"Authorization": f"Bearer {token}"}, timeout=10).json()
          except: pass
     
     target = next((g for g in user_guilds if g['id'] == str(guild_id)), None)
