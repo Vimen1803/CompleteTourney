@@ -26,6 +26,11 @@
       "usage": ",tourney leave"
     },
     {
+      "name": "tourney rename",
+      "desc": "Cambia el nombre de tu equipo. Solo lo puede usar el líder y únicamente antes de que el torneo inicie (inscripciones abiertas o cerradas). El nombre no puede repetirse ni superar los 50 caracteres.",
+      "usage": ",tourney rename <nuevo_nombre>"
+    },
+    {
       "name": "tourney info",
       "desc": "Muestra información del torneo activo o de uno específico.",
       "usage": ",tourney info [id_torneo]",
