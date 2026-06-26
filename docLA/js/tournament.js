@@ -111,7 +111,7 @@ window.submitRenameTeam = async function(e) {
             loadTournament(true);
         } else {
             const d = await res.json().catch(() => ({}));
-            showToast(d.error || "No se pudo renombrar el equipo.", 'error');
+            showToast(d.error || `No se pudo renombrar el equipo (error ${res.status}).`, 'error');
         }
     } catch (err) {
         showToast("Error de conexión", 'error');

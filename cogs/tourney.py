@@ -345,7 +345,7 @@ class Tourney(commands.Cog):
             embed_user = self.get_embed("Ayuda - Comandos de Usuario (Página 1/2)", "", author=ctx.author)
         embed_user.add_field(name=f"{PREFIX}tourney register <nombre_equipo> [@miembros...]", value="Registra un equipo en el torneo activo.", inline=False)
         embed_user.add_field(name=f"{PREFIX}tourney leave", value="Abandona tu equipo actual.", inline=False)
-        embed_user.add_field(name=f"{PREFIX}tourney rename <nuevo_nombre>", value="Cambia el nombre de tu equipo (líder, antes de iniciar). Organizadores: `rename <id/@miembro> | <nombre>`.", inline=False)
+        embed_user.add_field(name=f"{PREFIX}tourney rename <nuevo_nombre>", value="Cambia el nombre de tu equipo (líder, antes de iniciar). Organizadores: `rename <id/@miembro> <nombre>`.", inline=False)
         embed_user.add_field(name=f"{PREFIX}tourney invite <@usuario>", value="Invita a un usuario a tu equipo (solo líder).", inline=False)
         embed_user.add_field(name=f"{PREFIX}tourney info [id_torneo]", value="Muestra información del torneo activo, o de uno específico por ID (incluso finalizados).", inline=False)
         embed_user.add_field(name=f"{PREFIX}tourney teams [id_torneo]", value="Muestra los equipos registrados.", inline=False)
@@ -1912,7 +1912,7 @@ class Tourney(commands.Cog):
         """
         Cambia el nombre de un equipo.
         - Líder: `,tourney rename <nuevo_nombre>` (solo antes de iniciar).
-        - Organizador/Admin: `,tourney rename <id_equipo|@miembro> | <nuevo_nombre>` (cualquier equipo).
+        - Organizador/Admin: `,tourney rename <id_equipo/@miembro> <nuevo_nombre>` (cualquier equipo).
         """
         active_tourney = await DBManager.get_active_tournament(ctx.guild.id)
         if not active_tourney:
@@ -1920,26 +1920,44 @@ class Tourney(commands.Cog):
             return
 
         args = args.strip()
+        is_admin = await self.is_admin(ctx)
 
-        if "|" in args:
-            # Variante Organizador/Admin: renombra cualquier equipo
-            if not await self.admin_check(ctx):
-                return
-            target_str, _, new_name = args.partition("|")
-            new_name = new_name.strip()
-            team = await self.resolve_team(target_str, active_tourney['id'])
-            if not team:
-                await ctx.send(embed=self.get_embed("Error", "No se encontró el equipo. Usa el ID del equipo o menciona a uno de sus miembros.", discord.Color.red(), author=ctx.author))
-                return
+        # Detectar la variante Organizador/Admin: "rename <id/@miembro> <nuevo_nombre>"
+        # (también se acepta el separador "|"). Si el primer token no es un equipo,
+        # se trata como que el líder renombra su propio equipo.
+        admin_team = None
+        admin_new_name = None
+        if is_admin:
+            if "|" in args:
+                pt, _, pn = args.partition("|")
+                cand = await self.resolve_team(pt.strip(), active_tourney['id'])
+                if not cand:
+                    await ctx.send(embed=self.get_embed("Error", "No se encontró el equipo. Usa el ID del equipo o menciona a uno de sus miembros.", discord.Color.red(), author=ctx.author))
+                    return
+                admin_team = cand
+                admin_new_name = pn.strip()
+            else:
+                parts = args.split(maxsplit=1)
+                if len(parts) == 2:
+                    cand = await self.resolve_team(parts[0], active_tourney['id'])
+                    if cand:
+                        admin_team = cand
+                        admin_new_name = parts[1].strip()
+
+        if admin_team is not None:
+            # Organizador/Admin renombra cualquier equipo
+            team = admin_team
+            new_name = admin_new_name
         else:
-            # Variante Líder: renombra su propio equipo (solo antes de iniciar)
+            # Líder renombra su propio equipo (solo antes de iniciar)
             new_name = args.strip()
             team = await DBManager.get_team_by_member(ctx.author.id, active_tourney['id'])
             if not team:
-                await ctx.send(embed=self.get_embed("Error", "No perteneces a ningún equipo en el torneo activo.", discord.Color.red(), author=ctx.author))
+                hint = "\nSi eres organizador, usa `rename <id/@miembro> <nombre>`." if is_admin else ""
+                await ctx.send(embed=self.get_embed("Error", f"No perteneces a ningún equipo en el torneo activo.{hint}", discord.Color.red(), author=ctx.author))
                 return
             if team['leader_id'] != ctx.author.id:
-                await ctx.send(embed=self.get_embed("Error", "Solo el **líder** del equipo puede cambiar el nombre.\nSi eres organizador, usa `rename <id/@miembro> | <nombre>`.", discord.Color.red(), author=ctx.author))
+                await ctx.send(embed=self.get_embed("Error", "Solo el **líder** del equipo puede cambiar el nombre.", discord.Color.red(), author=ctx.author))
                 return
             if active_tourney['status'] not in ("open", "pending"):
                 await ctx.send(embed=self.get_embed("Error", "Solo puedes renombrar tu equipo antes de que el torneo inicie.", discord.Color.red(), author=ctx.author))
