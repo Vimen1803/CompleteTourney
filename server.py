@@ -1168,7 +1168,10 @@ async def get_tournament_details(guild_id: int, tournament_id: str, request: Req
     # Sort so leader is first
         resolved_members.sort(key=lambda x: not x['is_leader'])
         t['resolved_members'] = resolved_members
-        
+
+        # ¿Puede el usuario actual renombrar este equipo? (líder del equipo u organizador/admin)
+        t['can_rename'] = bool(can_manage or (user and str(t.get('leader_id')) == str(user.get('id'))))
+
         cleaned_teams.append(t)
     
     # Ensure guild_id is string for JS precision
@@ -1221,6 +1224,46 @@ async def delete_team_api(guild_id: int, team_id: str, request: Request):
 
     await DBManager.delete_team(team_id)
     return JSONResponse(content={"status": "deleted"})
+
+@app.post("/api/guild/{guild_id}/team/{team_id}/rename")
+async def rename_team_api(guild_id: int, team_id: str, request: Request):
+    user = request.session.get("user")
+    if not user: return JSONResponse(status_code=401, content={"error": "Login required"})
+
+    data = await request.json()
+    new_name = (data.get("name") or "").strip()
+    if not new_name:
+        return JSONResponse(status_code=400, content={"error": "Debes indicar un nombre."})
+    if len(new_name) > MAX_TEAM_NAME_LEN:
+        return JSONResponse(status_code=400, content={"error": f"El nombre no puede superar los {MAX_TEAM_NAME_LEN} caracteres."})
+
+    team = await DBManager.get_team(team_id)
+    if not team: return JSONResponse(status_code=404, content={"error": "Equipo no encontrado"})
+
+    # Permisos: líder del equipo, u organizador/admin
+    is_leader = str(team.get('leader_id')) == str(user.get('id'))
+    can_manage = await user_can_manage(guild_id, request)
+    if not (is_leader or can_manage):
+        return JSONResponse(status_code=403, content={"error": "No tienes permisos para renombrar este equipo."})
+
+    tourney = await DBManager.get_tournament(team['tournament_id'])
+    if not tourney: return JSONResponse(status_code=404, content={"error": "Torneo no encontrado"})
+
+    # El líder solo puede renombrar antes de iniciar; el torneo finalizado no se edita
+    if tourney.get('status') == 'finished':
+        return JSONResponse(status_code=409, content={"error": "El torneo ha finalizado."})
+    if not can_manage and tourney.get('status') not in ('open', 'pending'):
+        return JSONResponse(status_code=409, content={"error": "Solo puedes renombrar tu equipo antes de que el torneo inicie."})
+
+    if new_name == team.get('name'):
+        return JSONResponse(content={"status": "no_changes"})
+
+    existing = await DBManager.get_team_by_name(new_name, team['tournament_id'])
+    if existing and existing['id'] != team['id']:
+        return JSONResponse(status_code=409, content={"error": "Ya existe un equipo con ese nombre en este torneo."})
+
+    await DBManager.update_team(team_id, {"name": new_name})
+    return JSONResponse(content={"status": "renamed"})
 
 @app.get("/api/guild/{guild_id}/blacklist")
 async def get_blacklist_api(guild_id: int, request: Request):

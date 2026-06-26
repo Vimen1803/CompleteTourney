@@ -21,10 +21,39 @@ MAX_TOURNEY_DESC_LEN = 1000
 MAX_TEAM_NAME_LEN = 50
 
 
+class _ManualCtx:
+    """
+    Contexto mínimo que imita lo que `process_round`/`advance_round` esperan de un
+    `commands.Context`, para poder reutilizarlos desde una interacción de botón
+    (donde no hay un `ctx` real). Expone `guild`, `channel`, `author`, `bot` y un
+    `send` defensivo (ignora errores si el canal ya no existe, p. ej. al avanzar
+    de ronda se borran los canales de la ronda anterior).
+    """
+    def __init__(self, guild, channel, author, bot):
+        self.guild = guild
+        self.channel = channel
+        self.author = author
+        self.bot = bot
+
+    async def send(self, *args, **kwargs):
+        try:
+            return await self.channel.send(*args, **kwargs)
+        except Exception as e:
+            print(f"[_ManualCtx] No se pudo enviar mensaje de progreso: {e}")
+            return None
+
+
 class Tourney(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-    
+
+    async def cog_load(self):
+        # Registra la vista persistente de reporte de resultados para que los
+        # botones de los canales de enfrentamiento sigan funcionando tras un
+        # reinicio del bot (los custom_id son estáticos; el match se localiza por
+        # el canal donde se pulsa).
+        self.bot.add_view(MatchReportView(self))
+
     async def cog_check(self, ctx):
         return True
 
@@ -316,6 +345,7 @@ class Tourney(commands.Cog):
             embed_user = self.get_embed("Ayuda - Comandos de Usuario (Página 1/2)", "", author=ctx.author)
         embed_user.add_field(name=f"{PREFIX}tourney register <nombre_equipo> [@miembros...]", value="Registra un equipo en el torneo activo.", inline=False)
         embed_user.add_field(name=f"{PREFIX}tourney leave", value="Abandona tu equipo actual.", inline=False)
+        embed_user.add_field(name=f"{PREFIX}tourney rename <nuevo_nombre>", value="Cambia el nombre de tu equipo (líder, antes de iniciar). Organizadores: `rename <id/@miembro> | <nombre>`.", inline=False)
         embed_user.add_field(name=f"{PREFIX}tourney invite <@usuario>", value="Invita a un usuario a tu equipo (solo líder).", inline=False)
         embed_user.add_field(name=f"{PREFIX}tourney info [id_torneo]", value="Muestra información del torneo activo, o de uno específico por ID (incluso finalizados).", inline=False)
         embed_user.add_field(name=f"{PREFIX}tourney teams [id_torneo]", value="Muestra los equipos registrados.", inline=False)
@@ -857,11 +887,16 @@ class Tourney(commands.Cog):
                         f"**NORMAS DE LA PARTIDA**\n"
                         f"➡ Si tardas más de 10 minutos en aparecer en el momento que tengas que jugar, se te descalificará.\n"
                         f"➡ <@{t1['leader_id']}> pasará el link de la sala.\n"
-                        f"➡ Para confirmar el ganador mandar una captura donde salga el jugador que ganó."
+                        f"➡ Para confirmar el ganador mandar una captura donde salga el jugador que ganó.\n\n"
+                        f"**REPORTAR RESULTADO**\n"
+                        f"➡ El **líder ganador** pulsa el botón de su equipo.\n"
+                        f"➡ El **líder rival** confirma pulsando el botón del **mismo** equipo.\n"
+                        f"➡ Si hay desacuerdo, un administrador lo resuelve con `{PREFIX}tourney set winner <@miembro>`."
                     )
-                    
+
                     embed = self.get_embed(f"Enfrentamiento: {t1['name']} vs {t2['name']}", desc, author=ctx.author)
-                    await channel.send(content=content_mentions, embed=embed)
+                    report_view = MatchReportView(self, t1['name'], t2['name'])
+                    await channel.send(content=content_mentions, embed=embed, view=report_view)
                     
                 except Exception as e:
                     print(f"Error creating channel: {e}")
@@ -870,6 +905,146 @@ class Tourney(commands.Cog):
             
         tourney['matches'][round_num - 1] = new_matches_state
         await DBManager.update_tournament(tourney['id'], {"matches": tourney['matches']})
+
+    # ==========================================
+    # REPORTE DE RESULTADOS POR LOS JUGADORES
+    # ==========================================
+    async def _find_active_match_by_channel(self, guild, channel_id):
+        """
+        Devuelve (tourney, round_idx, match) del enfrentamiento cuyo canal coincide
+        con channel_id, o (None, None, None) si no hay torneo activo o no se encuentra.
+        Los canales de match solo existen para la ronda en curso del torneo activo.
+        """
+        tourney = await DBManager.get_active_tournament(guild.id)
+        if not tourney or tourney.get('status') != 'active':
+            return None, None, None
+        for r_idx, rnd in enumerate(tourney.get('matches', [])):
+            for m in rnd:
+                if m.get('channel_id') == channel_id:
+                    return tourney, r_idx, m
+        return None, None, None
+
+    async def handle_match_report(self, interaction: discord.Interaction, slot: str):
+        """
+        Gestiona el reporte/confirmación de ganador desde los botones del canal del
+        enfrentamiento. Un líder reclama el ganador; el líder rival confirma pulsando
+        el botón del MISMO equipo. Si pulsa el otro equipo, es un conflicto y se anula.
+        """
+        guild = interaction.guild
+        tourney, r_idx, match = await self._find_active_match_by_channel(guild, interaction.channel.id)
+        if not match:
+            await interaction.response.send_message("Este canal no corresponde a un enfrentamiento en curso.", ephemeral=True)
+            return
+
+        if match.get('winner_id'):
+            await interaction.response.send_message("Este enfrentamiento ya tiene un ganador.", ephemeral=True)
+            return
+
+        t1 = await DBManager.get_team(match['team1_id']) if match.get('team1_id') and match['team1_id'] != "BYE_SLOT" else None
+        t2 = await DBManager.get_team(match['team2_id']) if match.get('team2_id') and match['team2_id'] != "BYE_SLOT" else None
+
+        uid = interaction.user.id
+        # Solo los líderes de los dos equipos pueden reportar
+        clicker_slot = None
+        if t1 and t1.get('leader_id') == uid:
+            clicker_slot = 'team1'
+        elif t2 and t2.get('leader_id') == uid:
+            clicker_slot = 'team2'
+        if not clicker_slot:
+            await interaction.response.send_message("Solo los **líderes** de los dos equipos pueden reportar el resultado.", ephemeral=True)
+            return
+
+        claimed_team = t1 if slot == 'team1' else t2
+        if not claimed_team:
+            await interaction.response.send_message("Ese equipo no es válido para este enfrentamiento.", ephemeral=True)
+            return
+
+        pending_slot = match.get('reported_winner_slot')
+        pending_by = match.get('reported_by')
+
+        # 1) No hay reporte previo → registrar la reclamación
+        if not pending_slot:
+            match['reported_winner_slot'] = slot
+            match['reported_by'] = uid
+            await DBManager.update_tournament(tourney['id'], {"matches": tourney['matches']})
+            await interaction.response.send_message(
+                f"📝 {interaction.user.mention} reporta que gana **{claimed_team['name']}**.\n"
+                f"El **líder del equipo rival** debe pulsar el botón de **{claimed_team['name']}** para confirmar el resultado."
+            )
+            return
+
+        # 2) Ya hay un reporte: el mismo reportante no puede autoconfirmarse
+        if pending_by == uid:
+            await interaction.response.send_message("Ya has enviado tu reporte. Espera a que el **líder rival** confirme.", ephemeral=True)
+            return
+
+        # 3) Responde el líder rival
+        if slot == pending_slot:
+            # Acuerdo → fijar ganador
+            match['winner_id'] = claimed_team['id']
+            match.pop('reported_winner_slot', None)
+            match.pop('reported_by', None)
+            await DBManager.update_tournament(tourney['id'], {"matches": tourney['matches']})
+            try:
+                await interaction.message.edit(view=None)
+            except Exception:
+                pass
+            await interaction.response.send_message(f"✅ Resultado confirmado por ambos líderes: **{claimed_team['name']}** avanza.")
+
+            await self.send_log(
+                guild, tourney['id'],
+                "✅ Resultado Reportado",
+                f"**{tourney['name']}**\n\n**Ganador:** {claimed_team['name']}\n**Confirmado por:** {interaction.user.mention}",
+                discord.Color.green()
+            )
+
+            # Si la ronda actual está completa, avanzar automáticamente
+            if r_idx == tourney['current_round'] - 1:
+                current_matches = tourney['matches'][r_idx]
+                if all(m.get('winner_id') for m in current_matches):
+                    config = await DBManager.get_guild_config(guild.id)
+                    bracket_ch = None
+                    if config and config.get('bracket_channel_id'):
+                        bracket_ch = guild.get_channel(config.get('bracket_channel_id'))
+                    progress_channel = bracket_ch or interaction.channel
+                    manual_ctx = _ManualCtx(guild, progress_channel, interaction.user, self.bot)
+                    await self.advance_round(manual_ctx, tourney)
+        else:
+            # Desacuerdo → anular reporte y avisar
+            match.pop('reported_winner_slot', None)
+            match.pop('reported_by', None)
+            await DBManager.update_tournament(tourney['id'], {"matches": tourney['matches']})
+            await interaction.response.send_message(
+                "⚠️ **Conflicto:** cada líder reporta un ganador distinto, así que el reporte se ha anulado.\n"
+                f"Poneos de acuerdo y volved a reportar, o pedid a un administrador que lo resuelva con `{PREFIX}tourney set winner <@miembro>`."
+            )
+
+    async def handle_match_cancel(self, interaction: discord.Interaction):
+        """Anula un reporte pendiente. Lo puede hacer quien lo reportó o un admin."""
+        guild = interaction.guild
+        tourney, r_idx, match = await self._find_active_match_by_channel(guild, interaction.channel.id)
+        if not match:
+            await interaction.response.send_message("Este canal no corresponde a un enfrentamiento en curso.", ephemeral=True)
+            return
+        if not match.get('reported_winner_slot'):
+            await interaction.response.send_message("No hay ningún reporte pendiente que anular.", ephemeral=True)
+            return
+
+        is_admin = interaction.user.guild_permissions.administrator
+        if not is_admin:
+            config = await DBManager.get_guild_config(guild.id)
+            admin_roles = config.get('admin_roles', []) if config else []
+            if admin_roles and any(str(r.id) in admin_roles for r in interaction.user.roles):
+                is_admin = True
+
+        if interaction.user.id != match.get('reported_by') and not is_admin:
+            await interaction.response.send_message("Solo quien hizo el reporte o un administrador puede anularlo.", ephemeral=True)
+            return
+
+        match.pop('reported_winner_slot', None)
+        match.pop('reported_by', None)
+        await DBManager.update_tournament(tourney['id'], {"matches": tourney['matches']})
+        await interaction.response.send_message(f"↩️ Reporte anulado por {interaction.user.mention}. Podéis volver a reportar el resultado.")
 
     @tourney.group(name="set", invoke_without_command=True)
     async def tourney_set(self, ctx):
@@ -1709,6 +1884,100 @@ class Tourney(commands.Cog):
         
         await ctx.send(embed=self.get_embed("Equipo Abandonado", f"Has abandonado el equipo **{team['name']}**.{msg_extra}", author=ctx.author))
 
+    async def resolve_team(self, target: str, tournament_id: str):
+        """Resuelve un equipo por su ID o por la mención/ID de uno de sus miembros."""
+        target = (target or "").strip()
+        if not target:
+            return None
+        team = await DBManager.get_team(target)
+        if team and team.get('tournament_id') == tournament_id:
+            return team
+        user_id = None
+        if target.startswith("<@") and target.endswith(">"):
+            try:
+                user_id = int(target.replace("<@", "").replace("!", "").replace("&", "").replace(">", ""))
+            except ValueError:
+                user_id = None
+        else:
+            try:
+                user_id = int(target)
+            except ValueError:
+                user_id = None
+        if user_id:
+            return await DBManager.get_team_by_member(user_id, tournament_id)
+        return None
+
+    @tourney.command(name="rename")
+    async def rename_team(self, ctx, *, args: str):
+        """
+        Cambia el nombre de un equipo.
+        - Líder: `,tourney rename <nuevo_nombre>` (solo antes de iniciar).
+        - Organizador/Admin: `,tourney rename <id_equipo|@miembro> | <nuevo_nombre>` (cualquier equipo).
+        """
+        active_tourney = await DBManager.get_active_tournament(ctx.guild.id)
+        if not active_tourney:
+            await ctx.send(embed=self.get_embed("Error", "No hay ningún torneo activo en este servidor.", discord.Color.red(), author=ctx.author))
+            return
+
+        args = args.strip()
+
+        if "|" in args:
+            # Variante Organizador/Admin: renombra cualquier equipo
+            if not await self.admin_check(ctx):
+                return
+            target_str, _, new_name = args.partition("|")
+            new_name = new_name.strip()
+            team = await self.resolve_team(target_str, active_tourney['id'])
+            if not team:
+                await ctx.send(embed=self.get_embed("Error", "No se encontró el equipo. Usa el ID del equipo o menciona a uno de sus miembros.", discord.Color.red(), author=ctx.author))
+                return
+        else:
+            # Variante Líder: renombra su propio equipo (solo antes de iniciar)
+            new_name = args.strip()
+            team = await DBManager.get_team_by_member(ctx.author.id, active_tourney['id'])
+            if not team:
+                await ctx.send(embed=self.get_embed("Error", "No perteneces a ningún equipo en el torneo activo.", discord.Color.red(), author=ctx.author))
+                return
+            if team['leader_id'] != ctx.author.id:
+                await ctx.send(embed=self.get_embed("Error", "Solo el **líder** del equipo puede cambiar el nombre.\nSi eres organizador, usa `rename <id/@miembro> | <nombre>`.", discord.Color.red(), author=ctx.author))
+                return
+            if active_tourney['status'] not in ("open", "pending"):
+                await ctx.send(embed=self.get_embed("Error", "Solo puedes renombrar tu equipo antes de que el torneo inicie.", discord.Color.red(), author=ctx.author))
+                return
+
+        if not new_name:
+            await ctx.send(embed=self.get_embed("Error", "Debes indicar un nombre.", discord.Color.red(), author=ctx.author))
+            return
+
+        if new_name.startswith("<@") or new_name.startswith("<#") or new_name.startswith("<@&"):
+            await ctx.send(embed=self.get_embed("Error", "El nombre del equipo no puede ser una mención.", discord.Color.red(), author=ctx.author))
+            return
+
+        if len(new_name) > MAX_TEAM_NAME_LEN:
+            await ctx.send(embed=self.get_embed("Error", f"El nombre del equipo no puede superar los {MAX_TEAM_NAME_LEN} caracteres.", discord.Color.red(), author=ctx.author))
+            return
+
+        if new_name == team['name']:
+            await ctx.send(embed=self.get_embed("Error", "El nuevo nombre es igual al actual.", discord.Color.red(), author=ctx.author))
+            return
+
+        existing = await DBManager.get_team_by_name(new_name, active_tourney['id'])
+        if existing and existing['id'] != team['id']:
+            await ctx.send(embed=self.get_embed("Error", "Ya existe un equipo con ese nombre en este torneo.", discord.Color.red(), author=ctx.author))
+            return
+
+        old_name = team['name']
+        await DBManager.update_team(team['id'], {"name": new_name})
+
+        await self.send_log(
+            ctx.guild, active_tourney['id'],
+            "✏️ Equipo Renombrado",
+            f"**{old_name}** → **{new_name}**\n\n**Por:** {ctx.author.mention}",
+            discord.Color.blue()
+        )
+
+        await ctx.send(embed=self.get_embed("Equipo Renombrado", f"El nombre del equipo ha cambiado de **{old_name}** a **{new_name}**.", discord.Color.green(), author=ctx.author))
+
     @tourney.command(name="kick")
     async def kick_team(self, ctx, target: str):
         """
@@ -1980,6 +2249,32 @@ class ConfirmInviteView(discord.ui.View):
         
         await interaction.response.send_message(f"Te has unido a **{team['name']}**!", ephemeral=True)
         self.stop()
+
+
+class MatchReportView(discord.ui.View):
+    """
+    Vista persistente para reportar el resultado de un enfrentamiento desde su canal.
+    Los custom_id son estáticos: el enfrentamiento se localiza por el canal donde se
+    pulsa el botón, de modo que siguen funcionando tras un reinicio del bot.
+    """
+    def __init__(self, cog, team1_name: str = "Equipo 1", team2_name: str = "Equipo 2"):
+        super().__init__(timeout=None)
+        self.cog = cog
+        # Etiquetas dinámicas con los nombres reales; los custom_id se mantienen fijos.
+        self.report_team1.label = f"🏆 {team1_name[:60]}"
+        self.report_team2.label = f"🏆 {team2_name[:60]}"
+
+    @discord.ui.button(label="🏆 Equipo 1", style=discord.ButtonStyle.success, custom_id="match_report:team1")
+    async def report_team1(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.cog.handle_match_report(interaction, "team1")
+
+    @discord.ui.button(label="🏆 Equipo 2", style=discord.ButtonStyle.success, custom_id="match_report:team2")
+    async def report_team2(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.cog.handle_match_report(interaction, "team2")
+
+    @discord.ui.button(label="Anular reporte", style=discord.ButtonStyle.secondary, custom_id="match_report:cancel")
+    async def cancel_report(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.cog.handle_match_cancel(interaction)
 
 
 async def setup(bot):

@@ -241,8 +241,27 @@
         </div>
       </main>
     </div>
-    
+
+    <!-- Modal: Renombrar equipo -->
+    <div id="modal-rename-team" class="modal-overlay">
+      <div class="modal-content" style="max-width: 440px;">
+        <button class="modal-close" onclick="closeRenameTeam()">&times;</button>
+        <h2 class="modal-title" style="display:flex; align-items:center; gap:10px;">
+          <i class="fas fa-pen" style="color: var(--accent);"></i> Renombrar equipo
+        </h2>
+        <p style="color:var(--text-muted); margin-bottom:16px; font-size:0.9em;">Escribe el nuevo nombre del equipo.</p>
+        <form onsubmit="submitRenameTeam(event)">
+          <input type="hidden" id="rename-team-id">
+          <div class="form-group">
+            <label class="form-label">Nuevo nombre</label>
+            <input type="text" id="rename-team-input" class="form-input" maxlength="50" required>
+          </div>
+          <button type="submit" class="btn-modern primary" style="width:100%; justify-content:center;">Guardar</button>
+        </form>
+      </div>
+    </div>
+
     <script src="js/layout.js?v=3"></script>
-    <script src="js/tournament.js?v=11"></script>
+    <script src="js/tournament.js?v=12"></script>
   </body>
 </html>

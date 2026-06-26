@@ -2,6 +2,7 @@ let tourneyData = null;
 let guildDataGlobal = null;
 let activeTab = 'general';
 let lastDataHash = '';
+let teamsById = {};
 
 // Tab Switching Logic
 window.switchTournamentTab = function(tabName) {
@@ -73,6 +74,47 @@ window.deleteTeam = async function(guildId, teamId) {
         }
     } catch(e) {
             showToast("Error de conexión", 'error');
+    }
+}
+
+// Renombrar equipo (líder del equipo u organizador/admin)
+window.openRenameTeam = function(teamId) {
+    const team = teamsById[teamId];
+    if (!team) return;
+    document.getElementById('rename-team-id').value = teamId;
+    const input = document.getElementById('rename-team-input');
+    input.value = team.name || '';
+    document.getElementById('modal-rename-team').classList.add('active');
+    setTimeout(() => { input.focus(); input.select(); }, 50);
+}
+
+window.closeRenameTeam = function() {
+    document.getElementById('modal-rename-team').classList.remove('active');
+}
+
+window.submitRenameTeam = async function(e) {
+    e.preventDefault();
+    const params = new URLSearchParams(window.location.search);
+    const guildId = params.get('guild');
+    const teamId = document.getElementById('rename-team-id').value;
+    const name = document.getElementById('rename-team-input').value.trim();
+    if (!name) { showToast("Debes indicar un nombre.", 'error'); return; }
+    try {
+        const res = await fetch(`/api/guild/${guildId}/team/${teamId}/rename`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name })
+        });
+        if (res.ok) {
+            window.closeRenameTeam();
+            showToast("Nombre del equipo actualizado.", 'success');
+            loadTournament(true);
+        } else {
+            const d = await res.json().catch(() => ({}));
+            showToast(d.error || "No se pudo renombrar el equipo.", 'error');
+        }
+    } catch (err) {
+        showToast("Error de conexión", 'error');
     }
 }
 
@@ -219,7 +261,10 @@ async function loadTournament(force = false) {
         tourneyData = t; // Store global for Edit
 
         const teams = data.teams;
-        
+        // Mapa id->equipo para el modal de renombrar
+        teamsById = {};
+        (teams || []).forEach(tm => { teamsById[tm.id] = tm; });
+
         const canManage = data.can_manage;
         const isLoggedIn = data.is_logged_in;
         
@@ -378,7 +423,14 @@ async function loadTournament(force = false) {
                                             <i class="fas fa-trash"></i>
                                         </div>
                                     ` : '';
-                                    
+
+                                    // Rename Button (líder del equipo u organizador/admin)
+                                    const renameBtn = tm.can_rename ? `
+                                        <div onclick="openRenameTeam('${tm.id}')" style="position: absolute; bottom: 10px; left: 10px; cursor: pointer; color: var(--accent); opacity: 0.8; transition: opacity 0.2s;" title="Editar nombre">
+                                            <i class="fas fa-pen"></i>
+                                        </div>
+                                    ` : '';
+
                                     // Equipo ganador (torneo finalizado): borde oro + distintivo
                                     const isWinner = t.status === 'finished' && t.winner_id && t.winner_id !== 'BYE_SLOT' && String(t.winner_id) === String(tm.id);
                                     return `
@@ -391,6 +443,7 @@ async function loadTournament(force = false) {
                                         <div style="display:flex; flex-direction:column; gap:10px;">
                                             ${membersHtml}
                                         </div>
+                                        ${renameBtn}
                                         ${deleteBtn}
                                     </div>
                                 `}).join('')}
