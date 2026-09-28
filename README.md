@@ -6,9 +6,9 @@
   </p>
   <hr>
   <p>
-    <a href="https://tourneydoc.victormenjon.es/docs">Documentation</a>
+    <a href="https://complete-tourney.vercel.app/docs">Documentation</a>
     <br>
-    <a href="https://victormenjon.es">Website</a>
+    <a href="https://complete-tourney.vercel.app/">Website</a>
     <br>
     <a href="mailto:victormnjfan@gmail.com">Contact</a>
     <br>
@@ -34,11 +34,8 @@
   <a href="https://discord.com/oauth2/authorize?client_id=1448450835213189191&permissions=8&scope=bot">
     <img src="https://img.shields.io/badge/Invite_Bot-5865F2?style=for-the-badge&logo=discord&logoColor=white">
   </a>
-  <a href="https://tourneydoc.victormenjon.es">
+  <a href="https://complete-tourney.vercel.app">
     <img src="https://img.shields.io/badge/🚀_Start_Now-5865F2?style=for-the-badge&color=5865F2">
-  </a>
-  <a href="https://tourneydoc.victormenjon.es/status">
-    <img src="https://img.shields.io/badge/BotStatus-212529?style=for-the-badge&logo=statuspage&logoColor=white">
   </a>
 </p>
   <p>Do you like Tourney Bot? Give it a star⭐</p>
